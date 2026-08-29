@@ -70,8 +70,8 @@ async function writeDataset(db: import('firebase-admin/firestore').Firestore, da
   }
   await Promise.all(writer.flush());
 
-  for (const [i, c] of dataset.fileComments.entries()) {
-    writer.set(fileRefs[i].collection('comments').doc(), {
+  for (const c of dataset.fileComments) {
+    writer.set(fileRefs[c.fileIndex].collection('comments').doc(), {
       actorUid: c.actorUid,
       text: c.text,
       at: c.at,
