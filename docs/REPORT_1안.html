@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>순천대 바이브코딩 — 1안 Ctrl+F가 안 되는 학교</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{--ink:#16181d;--muted:#5b6270;--line:#e3e6ec;--accent:#1f5fd6;--accent-soft:#eef3fd;
+--warn-bg:#fff8e6;--warn-line:#e6b800;--ok-bg:#eef8f0;--ok-line:#2e9e5b;--bg:#fff;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:16.5px;line-height:1.78;word-break:keep-all;overflow-wrap:anywhere;}
+.wrap{max-width:860px;margin:0 auto;padding:56px 24px 96px}
+h1{font-size:2.05rem;line-height:1.3;letter-spacing:-.02em;margin:0 0 .6em;font-weight:800}
+h2{font-size:1.42rem;margin:2.6em 0 .7em;padding-top:.7em;border-top:2px solid var(--line);letter-spacing:-.015em;font-weight:750}
+h3{font-size:1.13rem;margin:2em 0 .5em;font-weight:700}
+p{margin:0 0 1.05em}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(31,95,214,.28)}
+a:hover{border-bottom-color:var(--accent)}
+hr{border:0;border-top:1px solid var(--line);margin:2.6em 0}
+ul,ol{margin:0 0 1.15em;padding-left:1.35em}
+li{margin:.34em 0}
+strong{font-weight:700}
+code{background:#f2f4f8;border:1px solid var(--line);border-radius:5px;padding:.1em .38em;font-size:.875em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all}
+pre{background:#f7f9fc;border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;line-height:1.62;margin:0 0 1.3em}
+pre code{background:none;border:0;padding:0;font-size:.855em;white-space:pre}
+blockquote{margin:1.5em 0;padding:18px 22px;background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0 10px 10px 0}
+blockquote>*:last-child{margin-bottom:0}
+table{border-collapse:collapse;width:100%;margin:0 0 1.5em;font-size:.9rem;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+th{background:#f5f7fa;font-weight:700;white-space:nowrap}
+tbody tr:nth-child(even){background:#fbfcfe}
+.meta{color:var(--muted);font-size:.94rem;margin:0 0 .4em}
+@media print{body{font-size:10.5pt}.wrap{max-width:none;padding:0}h2{break-after:avoid}table,pre,blockquote{break-inside:avoid}a{border:0;color:#000}}
+@media (max-width:640px){.wrap{padding:32px 16px 64px}body{font-size:15.5px}h1{font-size:1.6rem}}
+</style></head><body><div class="wrap"><h1 id="1">순천대 바이브코딩 경진대회 — 1등 노리는 주제 추천</h1>
+<p class="meta"><strong>작성 2026-08-27 · 접수 마감 2026-08-30 23:59 · 온라인 전시 08-31~09-04 · 심사 09-04~09-07 · 결과 09-08</strong></p>
+<blockquote>
+<p><strong>자매 보고서</strong> — 2안 「지금 비어있는 강의실: 공강 강의실 파인더」는 <a href="./REPORT_2안.md"><code>docs/REPORT_2안.md</code></a> (<a href="./REPORT_2안.html">HTML</a>)에 있습니다. 1안이 "문서를 읽는" 문제라면, 2안은 "시간표를 뒤집는" 문제 — 같은 "안 죽는 설계" 철학, 완전히 다른 메커니즘입니다.</p>
+</blockquote>
+<h2 id="_1">요약 — 결론부터</h2>
+<p>리서치 도중 <strong>대회 플랫폼(<code>scnuai.com</code>)의 소스가 GitHub에 공개되어 있다는 것</strong>을 발견했고, 플랫폼이 스스로 공개로 선언한 데이터에서 <strong>공식 심사 루브릭 100점 만점 전문</strong>과 <strong>현재 출품된 경쟁작 17개 전부</strong>를 확보했습니다. 그래서 이 보고서는 추측이 아니라 채점표를 보고 쓴 것입니다.</p>
+<p>세 가지가 판을 결정합니다.</p>
+<ol>
+<li><strong>주최측이 플랫폼 기본 루브릭을 통째로 갈아엎었습니다.</strong> 기본값은 창업형(독창성·<strong>사업성</strong>·전달력)인데, 이 대회는 <strong>사업성 40점을 전부 삭제</strong>하고 <strong>구현 완성도 35점 + AI 활용 역량 20점</strong>을 그 자리에 넣었습니다. 수익모델·시장성·로드맵은 <strong>0점</strong>입니다. 이건 아이디어 대회가 아니라 <strong>"진짜 만들었는지 검사하는 대회"</strong>입니다.</li>
+<li><strong>AI 활용 역량 20점은 작품의 AI 기능이 아니라 '개발일지'로 채점됩니다.</strong> 그리고 <strong>루브릭은 참가자에게 렌더링되지 않습니다</strong>(admin 전용 화면에만 존재). 즉 경쟁자들은 개발일지가 20점짜리라는 걸 모릅니다. 가장 값싼 20점입니다.</li>
+<li><strong>경쟁작 17개 중 12개가 "학사 정보 + 런타임 LLM 호출" 이라는 똑같은 접근</strong>입니다. 그리고 실제로 열어보니 <strong>1개는 이미 죽었고, 14개는 OG 태그조차 없고, 여러 개가 빈 껍데기</strong>입니다.</li>
+</ol>
+<blockquote>
+<h3 id="ctrlf">추천 주제: 「<strong>Ctrl+F가 안 되는 학교</strong>」</h3>
+<p>순천대 공지의 상당수는 <strong>이미지(PNG)나 한글파일(HWPX)로만</strong> 올라옵니다. 그래서 검색도, 복사도, 번역도 안 됩니다. 이걸 <strong>빌드 타임에 AI가 전부 읽어서</strong> 텍스트와 <strong>구조화된 데이터로 축적</strong>하는 서비스입니다.</p>
+<p>결정적인 건 두 가지입니다.</p>
+<ol>
+<li>
+<p><strong>접근 방식이 필드 전체와 정반대입니다.</strong> 경쟁작 12개는 런타임에 LLM을 호출합니다. 이건 <strong>런타임에 AI를 한 번도 호출하지 않습니다.</strong> AI는 빌드할 때 일하고, 배포된 사이트는 완전히 결정론적입니다. API 키도, DB도, 외부 호출도 없어서 심사 기간에 죽을 수가 없습니다.</p>
+</li>
+<li>
+<p><strong>단발 OCR이 아니라 축적입니다.</strong> 생활관 「수시모집 접수 순번 현황」은 <strong>같은 양식의 이미지로 격일마다 반복 게시</strong>됩니다(8.11, 8.19, 8.21 기준 확인). 이 이미지들을 하나의 <strong>수치 시계열</strong>로 융합하면, 개별 이미지를 아무리 들여다봐도 안 보이는 <strong>경쟁률 추세</strong>가 나옵니다. 이게 "그거 Gemini에 이미지 붙여넣으면 되잖아요"라는 반론을 정면으로 무너뜨립니다.</p>
+</li>
+</ol>
+</blockquote>
+<hr />
+<h2 id="1_1">1. 확보한 사실 — 이 보고서의 근거</h2>
+<h3 id="11">1.1 어떻게 확보했나 (그리고 무엇을 하지 않았나)</h3>
+<p>대회 플랫폼의 소스가 공개되어 있습니다: <a href="https://github.com/LimJongTak/auraproject"><code>github.com/LimJongTak/auraproject</code></a> — 설명란이 "국립순천대학교 AI인재양성부트캠프사업단 대회 서비스", HEAD <code>c6d9a6c</code>(2026-08-26 09:23 KST).</p>
+<p>그 저장소의 <code>firestore.rules</code>가 다음을 <strong>명시적으로 공개 읽기로 선언</strong>합니다.</p>
+<pre><code>match /categories/{categoryId} { allow read: if true; }
+match /exhibitions/{id} { allow read: if resource.data.status == 'published' || ... }
+</code></pre>
+<p>즉 아래 데이터는 <strong>앱이 스스로 공개로 선언한 것</strong>이며, 로그인한 방문자의 브라우저가 읽는 것과 정확히 같습니다. 제가 처음에 받은 <code>403</code>은 필터 없는 목록 조회였기 때문이고, 규칙이 요구하는 <code>status == 'published'</code> 필터를 걸자 통과했습니다.</p>
+<p><strong>하지 않은 것</strong>: 익명 인증 우회(시도했다가 <code>ADMIN_ONLY_OPERATION</code>으로 거부되어 즉시 중단), 자격증명 추측, 권한 상승. 학생 개인정보·심사 점수(<code>evaluations</code>)는 규칙상 judge/admin 전용이며 접근하지 않았고 접근되지도 않습니다.</p>
+<h3 id="12-100">1.2 ★ 공식 심사 루브릭 100점</h3>
+<table>
+<thead>
+<tr>
+<th>그룹</th>
+<th>항목</th>
+<th style="text-align: right;">배점</th>
+<th>심사 기준 (원문)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>문제정의</strong></td>
+<td>문제 발굴</td>
+<td style="text-align: right;">10</td>
+<td>대학생활 속 실제 불편·문제를 구체적으로 포착하였는가?</td>
+</tr>
+<tr>
+<td><strong>문제정의</strong></td>
+<td><strong>독창성</strong></td>
+<td style="text-align: right;"><strong>15</strong></td>
+<td><strong>기존 서비스 대비 접근 방식의 차별성이 있는가?</strong></td>
+</tr>
+<tr>
+<td><strong>구현 완성도</strong></td>
+<td>실제 작동</td>
+<td style="text-align: right;">15</td>
+<td>제출된 배포 URL에서 핵심 기능이 오류 없이 구동되는가?</td>
+</tr>
+<tr>
+<td><strong>구현 완성도</strong></td>
+<td>기능 충실도</td>
+<td style="text-align: right;">10</td>
+<td>기획 단계에서 제시한 기능이 실제로 구현되었는가?</td>
+</tr>
+<tr>
+<td><strong>구현 완성도</strong></td>
+<td>UI / UX</td>
+<td style="text-align: right;">10</td>
+<td>별도 설명 없이도 사용자가 직관적으로 이용할 수 있는가?</td>
+</tr>
+<tr>
+<td><strong>AI 활용 역량</strong></td>
+<td>개발 과정</td>
+<td style="text-align: right;">10</td>
+<td>프롬프트 설계 및 반복 개선 과정이 <strong>개발일지에</strong> 드러나는가?</td>
+</tr>
+<tr>
+<td><strong>AI 활용 역량</strong></td>
+<td>문제 해결</td>
+<td style="text-align: right;">10</td>
+<td>개발 중 막힌 지점을 AI와 협업하여 해결한 과정이 구체적인가?</td>
+</tr>
+<tr>
+<td><strong>확장성·전달력</strong></td>
+<td>지속가능성</td>
+<td style="text-align: right;">10</td>
+<td><strong>실제 학내 도입 시</strong> 유지·확장할 여지가 있는가?</td>
+</tr>
+<tr>
+<td><strong>확장성·전달력</strong></td>
+<td>발표·전달</td>
+<td style="text-align: right;">10</td>
+<td>기획 의도와 결과물을 명확하게 전달하였는가?</td>
+</tr>
+</tbody>
+</table>
+<p>그룹 합계 — 문제정의 25 · <strong>구현 완성도 35</strong> · AI 활용 역량 20 · 확장성·전달력 20</p>
+<h3 id="13">1.3 주최측이 기본 루브릭에서 바꾼 것 (이게 의도를 드러냅니다)</h3>
+<p>플랫폼에는 <code>DEFAULT_RUBRIC</code> 기본 10문항이 있습니다. 이 대회는 그걸 쓰지 않고 9문항을 새로 썼습니다.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>기본 루브릭 (미사용)</th>
+<th>이 대회 (실제 사용)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>그룹</td>
+<td>독창성 30 / <strong>사업성 40</strong> / 전달력 30</td>
+<td>문제정의 25 / <strong>구현 완성도 35</strong> / <strong>AI 활용 역량 20</strong> / 확장성·전달력 20</td>
+</tr>
+<tr>
+<td>삭제됨</td>
+<td>—</td>
+<td>시장성·수익성·수익모델·로드맵 <strong>(40점 전부)</strong></td>
+</tr>
+<tr>
+<td>신설됨</td>
+<td>—</td>
+<td>실제 작동·기능 충실도·UI/UX·개발일지·AI 협업 과정</td>
+</tr>
+</tbody>
+</table>
+<p><strong>해석</strong>: 주최측은 "사업 계획을 잘 발표하는 것"에 관심이 없습니다. <strong>돌아가는가</strong>와 <strong>AI로 어떻게 만들었는가</strong>만 봅니다.
+→ 발표자료에 수익모델·시장 규모·비즈니스 로드맵을 쓰면 <strong>한 푼도 못 받습니다.</strong> 그 지면을 개발일지에 쓰세요.</p>
+<h3 id="14">1.4 대회 상세 원문에서 추가로 확인된 것</h3>
+<ul>
+<li><strong>"발표평가는 진행하지 않습니다."</strong> (원문 명시) → 발표·전달 10점은 <strong>PDF 발표자료가 통째로 짊어집니다.</strong></li>
+<li>제출 마감 <code>2026-08-30T14:59:00Z</code> = <strong>KST 08-30 23:59</strong>. 접수는 08-12부터 열려 있었습니다.</li>
+<li><strong>작품 심사 09-04 ~ 09-07</strong>, 결과 09-08.</li>
+<li>1인 단독(<code>teamSizeMin: 1, teamSizeMax: 1</code>), 주제 비공개 없음(<code>themeRevealAt: null</code>).</li>
+<li>공모내용: "사소한 불편 개선안부터 학생들의 편의 증진을 도모하는 모든 아이디어의 <strong>소프트웨어 및 웹/앱 서비스 구현</strong>"</li>
+</ul>
+<h3 id="15-17">1.5 ★ 실제 경쟁작 17개와 그 상태</h3>
+<p>제가 17개 URL을 전부 열어봤습니다. 좋아요 수는 08-27 시점입니다.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">#</th>
+<th>제목</th>
+<th>접근 방식</th>
+<th style="text-align: right;">좋아요</th>
+<th>URL 응답</th>
+<th>OG 태그</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td>어디가? 캠퍼스 업무 네비게이터</td>
+<td>업무 키워드→부서·절차 안내</td>
+<td style="text-align: right;">3</td>
+<td>200 (7.3KB)</td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td><strong>SCNU Flow</strong></td>
+<td>AI 대학생활 매니저</td>
+<td style="text-align: right;"><strong>16</strong></td>
+<td>200 <strong>(797B 빈 셸, 2.2초)</strong></td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td>책 읽는 공강</td>
+<td>공강 맞춤 도서 추천(Gemini)</td>
+<td style="text-align: right;">3</td>
+<td>200 (11.9KB)</td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td>졸업사(死)정 방지턱</td>
+<td>편람 RAG 졸업요건 Agent</td>
+<td style="text-align: right;">3</td>
+<td>200 <strong>(610B 빈 셸)</strong></td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td>쓸까말까</td>
+<td>AI 소비 코치</td>
+<td style="text-align: right;">2</td>
+<td>200 (24KB, 1.4초)</td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td>나 졸업할 수 있을까?</td>
+<td>졸업요건 자가진단</td>
+<td style="text-align: right;">1</td>
+<td>200 (107KB)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td>scholar</td>
+<td>장학금·정책 AI 요약</td>
+<td style="text-align: right;">2</td>
+<td>200 (19KB)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
+<td>Scoop</td>
+<td>학년·전공 맞춤 AI 공지 비서</td>
+<td style="text-align: right;">5</td>
+<td><strong>✗ 타임아웃 (20초, 응답 없음)</strong></td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td>시간표 서포터</td>
+<td>시간표 설계</td>
+<td style="text-align: right;">2</td>
+<td>200 <strong>(617B 빈 셸)</strong></td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td>교수님 이번만요</td>
+<td>AI 학점 역산</td>
+<td style="text-align: right;">2</td>
+<td>200 (11KB)</td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td>학사 캘린더</td>
+<td>학사일정 통합</td>
+<td style="text-align: right;">2</td>
+<td>200 (825B)</td>
+<td>✓</td>
+</tr>
+<tr>
+<td style="text-align: right;">12</td>
+<td>타임핏</td>
+<td>팀원 공통 빈 시간</td>
+<td style="text-align: right;">1</td>
+<td>200 (7.4KB)</td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
+<td><strong>동학(同學)</strong></td>
+<td>성향 파악 AI 학사 메이트</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td>200 <strong>(1.5KB 빈 셸)</strong></td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
+<td>SCNU Bridge</td>
+<td>졸업생 취업현황+멘토</td>
+<td style="text-align: right;">2</td>
+<td>200 (74KB)</td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">15</td>
+<td>클린랜즈</td>
+<td>세탁 라벨 촬영→AI 분석</td>
+<td style="text-align: right;">2</td>
+<td>200 (10KB)</td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">16</td>
+<td>빈 강의실 찾기</td>
+<td>빈 강의실 현황판</td>
+<td style="text-align: right;">2</td>
+<td>200 (20KB)</td>
+<td>✗</td>
+</tr>
+<tr>
+<td style="text-align: right;">17</td>
+<td>벼락치기 메이트</td>
+<td>전공서적→요약·족보</td>
+<td style="text-align: right;">1</td>
+<td>200 (16KB)</td>
+<td>✗</td>
+</tr>
+</tbody>
+</table>
+<p><strong>필드에서 읽어야 할 것 네 가지</strong></p>
+<ol>
+<li><strong>17개 중 12개가 "학사·행정 정보 + 런타임 LLM 호출"이라는 동일한 접근</strong>입니다. 졸업요건이 2개(#4,#6), 공지 요약이 2개(#7,#8), 시간표·공강이 2개(#9,#12) — 이미 서로 겹쳐 있습니다.</li>
+<li><strong>#8 Scoop은 이미 죽었습니다.</strong> onrender 무료 티어 슬립으로 20초 안에 응답이 없습니다. 심사는 09-04~09-07인데, 지금 이 상태면 심사위원이 열었을 때 <strong>실제 작동 15점이 0점</strong>입니다.</li>
+<li><strong>14개가 <code>og:title</code>조차 없습니다.</strong> 전시관은 <code>projectUrl</code>을 읽어 Open Graph로 미리보기 카드를 만드는데, 그 카드가 비어 있다는 뜻입니다.</li>
+<li>좋아요 1·2위(#2 16표, #13 8표)의 페이지가 <strong>797B, 1.5KB짜리 클라이언트 렌더 빈 셸</strong>입니다. 좋아요는 작품 품질이 아니라 <strong>먼저 올린 순서와 아는 사람 수</strong>로 붙었을 가능성이 큽니다.</li>
+</ol>
+<hr />
+<h2 id="2-ctrlf">2. 추천 주제 — 「Ctrl+F가 안 되는 학교」</h2>
+<h3 id="21">2.1 무엇을 만드는가</h3>
+<p>순천대 홈페이지의 공지 상당수는 <strong>본문이 이미지 한 장</strong>이거나 <strong>한글파일 첨부</strong>입니다. 제가 실물로 확인했습니다.</p>
+<blockquote>
+<p>생활관 「재학생 합격 인원 및 합격 컷트라인 현황」 (<a href="https://www.scnu.ac.kr/dorm/na/ntt/selectNttInfo.do?nttSn=281312946&amp;mi=1337">nttSn=281312946</a>)
+— 본문 텍스트는 "아래와 같이 공지하오니 참고 바랍니다"까지고, <strong>정작 합격 점수는 전부 이 이미지 안에 있습니다</strong>:
+<code>https://www.scnu.ac.kr/editor/x_free/upload/20260619/IMG_152411.png</code> (1300×720 PNG, 121KB)</p>
+</blockquote>
+<p>그래서 벌어지는 일:</p>
+<ul>
+<li><strong>검색이 안 됩니다.</strong> 포털에서 "컷트라인"을 쳐도 그 숫자는 안 나옵니다. 이미지니까요.</li>
+<li><strong>복사가 안 됩니다.</strong> 친구에게 보내려면 스크린샷을 찍어야 합니다.</li>
+<li><strong>모바일에서 확대해야 읽힙니다.</strong></li>
+<li><strong>번역이 안 됩니다.</strong> 유학생에게는 벽입니다.</li>
+<li><strong>비교가 안 됩니다.</strong> 작년 컷은 어땠는지 보려면 공지를 하나씩 뒤져 이미지를 하나씩 열어야 합니다.</li>
+<li><strong>Ctrl+F가 안 됩니다.</strong> 이게 제목입니다.</li>
+</ul>
+<p>만들 것은 두 층입니다.</p>
+<p><strong>1층 — 판독.</strong> 이 공지들을 전부 텍스트로 바꿔놓은 검색 가능한 아카이브. 검색창에 "컷트라인"을 치면 이미지 안에 있던 숫자가 텍스트로 나오고 원문 링크가 붙습니다.</p>
+<p><strong>2층 — 축적 (이게 진짜 차별점입니다).</strong> 생활관 RSS를 확인해보면 「2026-2학기 수시모집 접수 순번 현황」이 <strong>8.11, 8.19, 8.21 … 격일 간격으로 같은 양식의 이미지로 반복 게시</strong>됩니다. 이 이미지들을 판독해 하나의 수치 시계열로 합치면 <strong>경쟁률이 어떻게 움직이는지가 그래프로 보입니다.</strong> 개별 이미지를 아무리 열어봐도 안 보이던 것입니다.</p>
+<blockquote>
+<p><strong>"그거 그냥 Gemini에 이미지 붙여넣으면 되잖아요"에 대한 답</strong>
+붙여넣으려면 그 이미지를 <strong>먼저 찾아야</strong> 하는데, 검색이 안 되는 게 바로 이 문제입니다. 그리고 격일로 올라온 이미지 20장을 하나씩 붙여넣어도 <strong>추세는 나오지 않습니다.</strong> OCR은 부품이고, 제품은 <strong>수집·구조화·축적·검색</strong>입니다.</p>
+</blockquote>
+<h3 id="22-1-9">2.2 왜 이게 1등감인가 — 루브릭 9항목 대응</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th style="text-align: right;">배점</th>
+<th>이 주제의 근거</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>문제 발굴</td>
+<td style="text-align: right;">10</td>
+<td><strong>실물 URL 하나로 증명이 끝납니다.</strong> 슬라이드에 그 PNG를 띄우고 "이 안에 있는 숫자는 검색이 안 됩니다"라고 쓰면 됩니다. 추상적 불편이 아니라 클릭 가능한 증거이고, <strong>기숙사 신청자 전원</strong>이 겪습니다.</td>
+</tr>
+<tr>
+<td><strong>독창성</strong></td>
+<td style="text-align: right;"><strong>15</strong></td>
+<td>채점 문구가 "<strong>기존 서비스 대비 접근 방식</strong>의 차별성"입니다. ① 기존 서비스(포털·에브리타임·챗GPT)가 <strong>구조적으로 못 합니다</strong> — 포털은 이미지 속 글자를 색인하지 않고, 챗GPT에 붙여넣으려면 그 이미지를 먼저 찾아야 하는데 그게 바로 안 되는 일이며, 붙여넣어도 <strong>격일 게시물의 추세는 안 나옵니다</strong>. ② 경쟁작 12개는 <strong>런타임에 LLM을 호출</strong>하는데, 이건 <strong>런타임에 AI를 전혀 호출하지 않습니다</strong>.</td>
+</tr>
+<tr>
+<td>실제 작동</td>
+<td style="text-align: right;">15</td>
+<td><strong>API 키 없음, DB 없음, 런타임 외부 호출 없음.</strong> 빌드 결과가 정적 파일이라 심사 기간(09-04~09-07)에 죽을 경로가 없습니다. #8 Scoop은 이미 죽었고 여러 작품이 콜드스타트에 걸립니다. <strong>여기가 최대 변별 구간입니다.</strong></td>
+</tr>
+<tr>
+<td>기능 충실도</td>
+<td style="text-align: right;">10</td>
+<td>약속을 작게 잡습니다: 검색 · 추세 그래프 · 원문 링크. 슬라이드에 "향후 계획"을 기능처럼 쓰지 않으면 감점 여지가 없습니다.</td>
+</tr>
+<tr>
+<td>UI / UX</td>
+<td style="text-align: right;">10</td>
+<td>화면이 <strong>검색창 하나 + 그래프 하나</strong>입니다. "별도 설명 없이도 직관적으로"에 이보다 잘 맞는 형태가 없습니다.</td>
+</tr>
+<tr>
+<td>AI 개발 과정</td>
+<td style="text-align: right;">10</td>
+<td>뒤의 §4 개발일지 참조. 이 주제는 개발일지 소재가 저절로 나옵니다.</td>
+</tr>
+<tr>
+<td>AI 문제 해결</td>
+<td style="text-align: right;">10</td>
+<td>동일. <strong>"OCR이 표를 통째로 놓쳤다 → 원인을 찾아 고쳤다"</strong>는 서사가 이 항목의 교과서입니다.</td>
+</tr>
+<tr>
+<td>지속가능성</td>
+<td style="text-align: right;">10</td>
+<td>"<strong>실제 학내 도입 시</strong>"에 정면으로 답합니다. 예상 반론 — <em>"그냥 학교가 텍스트로 올리면 되잖아"</em> — 에 대한 답이 준비돼 있습니다: <strong>이미 3년치 이미지 공지가 검색 불가 상태로 쌓여 있고, 그건 소급 변환이 필요합니다.</strong> 앞으로의 게시 정책과 무관하게 과거 데이터는 남습니다.</td>
+</tr>
+<tr>
+<td>발표·전달</td>
+<td style="text-align: right;">10</td>
+<td>제목 한 줄이 곧 설명입니다. <strong>"Ctrl+F가 안 되는 학교"</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<h3 id="68">⚠️ 프레이밍 주의 — 여기서 6~8점이 갈립니다</h3>
+<p>이 작품을 <strong>"정보 접근성 서비스"라고 부르지 마세요.</strong> 세 가지 이유입니다.
+1. 심사위원이 <strong>소수자 대상 서비스로 축소 인식</strong>해서 문제 발굴 점수가 오히려 내려갑니다.
+2. 순천대에 스크린리더 사용 학생이 몇 명인지 <strong>증명할 수 없습니다.</strong> 근거 없는 규모 주장은 역효과입니다.
+3. 결정적으로 — 심사위원은 <strong>사업단 교직원</strong>입니다. "학교가 웹 접근성 의무를 안 지킨다"는 프레임은 <strong>자기 기관 비판</strong>으로 읽힙니다. 접근성 법령을 발표 무기로 쓰는 건 최악의 수입니다.</p>
+<p><strong>대신 "기숙사 신청하는 학생 전원이 겪는 정보 불편"으로 부르세요.</strong> 같은 코드, 다른 문장인데 점수가 다릅니다. 스크린리더 낭독과 유학생 번역은 <strong>마지막 슬라이드의 보너스</strong>로 한 줄만 넣으세요 — 그러면 "덤으로 이런 것도 된다"가 되지, "소수자 서비스"가 되지 않습니다.</p>
+</blockquote>
+<h3 id="23">2.3 왜 기존 전시 주제와 겹치지 않는가</h3>
+<table>
+<thead>
+<tr>
+<th>겹칠 뻔한 경쟁작</th>
+<th>그쪽이 하는 일</th>
+<th>이쪽이 다른 지점</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>#7 scholar, #8 Scoop</td>
+<td><strong>이미 텍스트인</strong> 공지를 LLM으로 요약·추천</td>
+<td>이건 <strong>텍스트가 아닌 것을 텍스트로 만듭니다.</strong> 요약이 아니라 <strong>판독</strong>입니다. 층위가 다릅니다.</td>
+</tr>
+<tr>
+<td>#1 어디가?</td>
+<td>업무 키워드로 담당부서 안내 (RAG 검색)</td>
+<td>대상이 "이미 읽히는 안내문"입니다. 이건 <strong>읽히지 않는 문서</strong>가 대상입니다.</td>
+</tr>
+<tr>
+<td>#4 졸업사정 방지턱</td>
+<td>교육과정 편람 RAG 질의응답</td>
+<td>런타임 LLM 호출형. 이건 런타임 호출 0회.</td>
+</tr>
+<tr>
+<td>#11 학사 캘린더</td>
+<td>학사일정 통합</td>
+<td>데이터가 이미 구조화된 것. 이건 비구조 데이터가 소스.</td>
+</tr>
+<tr>
+<td>나머지 12개 전부</td>
+<td>런타임 LLM 호출</td>
+<td><strong>빌드타임 AI + 결정론적 런타임 — 필드에 0개입니다.</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="24-vercel-hobby">2.4 Vercel Hobby 배포 설계</h3>
+<pre><code>[빌드 타임 — 내 컴퓨터 / GitHub Actions]
+  학교 공지 RSS·목록 수집
+    → 본문이 이미지인가? → Gemini Flash 비전으로 판독
+    → 첨부가 HWPX인가?  → @ssabrojs/hwpxjs 로 파싱
+    → 구조화 JSON 생성 (제목·날짜·본문텍스트·표·원문링크)
+    → public/data/notices.json 으로 저장  ← AI는 여기서 일이 끝납니다
+
+[런타임 — Vercel Hobby]
+  Next.js 정적 페이지 + 클라이언트 검색 인덱스 (FlexSearch/MiniSearch)
+  AI 호출 0회 · DB 0개 · API 키 0개 · 크론 불필요
+  낭독은 브라우저 내장 SpeechSynthesis (무료, 서버 부하 0)
+</code></pre>
+<p>Vercel Hobby 제약 대비 (공식 문서 기준, 2026-08-27 확인):</p>
+<table>
+<thead>
+<tr>
+<th>제약</th>
+<th>값</th>
+<th>이 설계</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cron 하루 1회 상한</td>
+<td>더 잦으면 배포 거부</td>
+<td><strong>크론 자체가 불필요</strong> (빌드 시 갱신)</td>
+</tr>
+<tr>
+<td>Supabase 7일 무활동 pause</td>
+<td>제출 08-30 → 심사 09-07은 <strong>8일</strong></td>
+<td><strong>DB를 안 씁니다</strong></td>
+</tr>
+<tr>
+<td>초과 시 계정 일시정지</td>
+<td>Active CPU 4h/월</td>
+<td>정적 서빙이라 CPU 소모 거의 0</td>
+</tr>
+<tr>
+<td>비밀번호 보호 없음, 도메인 공개</td>
+<td>Hobby 제한</td>
+<td>공개 공지만 다루므로 문제 없음</td>
+</tr>
+<tr>
+<td>AI 무료는 Gemini Flash뿐</td>
+<td>쿼터 소진 위험</td>
+<td>빌드 타임에만 쓰므로 <strong>심사 중 쿼터 이슈 없음</strong></td>
+</tr>
+<tr>
+<td>함수 body 4.5MB</td>
+<td>—</td>
+<td>서버 함수를 안 씁니다</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>참고</strong>: 학교 소스는 전부 <code>Access-Control-Allow-Origin</code> 헤더가 없어 브라우저에서 직접 못 부릅니다. 이게 서버 사이드에서 처리해야 하는 정당한 기술적 이유이고, 발표자료에 쓸 수 있는 재료입니다.</p>
+</blockquote>
+<p><code>robots.txt</code> 확인: <code>Disallow: /upload/</code>, <code>/search/</code> 두 줄뿐이고, 공지 이미지는 <code>/editor/x_free/upload/</code> 경로라 해당하지 않습니다. 공지 본문 페이지도 금지 대상이 아닙니다. 다만 <strong>원문 링크를 항상 병기하고, 출처를 명시</strong>하세요 — 재배포가 아니라 접근성 보조라는 성격이 분명해야 합니다.</p>
+<h3 id="25">2.5 실행 가능성 — 이미 검증된 것들</h3>
+<p>리서치 과정에서 <strong>실제로 코드를 돌려본</strong> 결과입니다. 아래는 추정이 아니라 실행 출력입니다.</p>
+<p><strong>이미지 OCR — 됩니다.</strong> 문제의 그 공지 이미지(1300×720 PNG, 121KB, 로그인 불필요)를 로컬 <code>tesseract -l kor</code>만으로 돌렸더니 합격선 표가 통째로 나왔습니다:</p>
+<pre><code>구분 | 청운관 | 향림관 | 창조관 | 성종관 | 웅지관 ...
+1차 (69.78) | 14 | 107 | 165 ...
+</code></pre>
+<p>소수점까지 읽힙니다. Gemini Flash 비전은 한국어 표에서 tesseract보다 우위이므로 여유가 있습니다. base64로 158KB라 Vercel의 4.5MB body 한도의 3.4%밖에 안 씁니다.</p>
+<p><strong>아키텍처 — 실제로 빌드해서 돌려봤습니다.</strong> Next.js 15.5.24로 최소 재현 앱을 만들어 빌드·구동했습니다.</p>
+<pre><code>next build → ✓ Generating static pages (5/5)
+Route                       Revalidate
+○ /                         30m      ← 빌드타임 RSS 파싱 프리렌더 (ISR)
+ƒ /api/schedule             dynamic
+
+next start 후: GET /api/schedule → {&quot;ok&quot;:true,&quot;count&quot;:394,...}
+              GET /            → 200, 실제 공지 제목 5건 렌더
+</code></pre>
+<p><strong>크론 없이 요청 시점 갱신만으로 신선도가 유지됩니다.</strong> <code>fetch</code>의 revalidate가 stale-while-revalidate라, 학교 서버가 느려지거나 죽어도 마지막 성공 캐시를 즉시 서빙합니다.</p>
+<p><strong>HWPX 파싱</strong>: <code>@ssabrojs/hwpxjs</code> v0.4.0 (MIT, 주간 다운로드 8,062)으로 생성→파싱 왕복 100% 성공. 표→마크다운 변환이 내장돼 있고 브라우저 ESM도 지원합니다.</p>
+<p><strong>주의점 — 그리고 이게 그대로 개발일지 소재입니다</strong>: <code>tesseract.js</code>는 격자선이 있는 표에서 <strong>본문을 통째로 놓칩니다.</strong> 신뢰도가 94로 높게 나오는데도 내용이 비어 있는 함정입니다. 격자선을 제거하는 전처리를 넣으면 전체 셀이 복구됩니다(conf 88).</p>
+<p><strong>모든 학교 소스에 CORS 헤더가 없습니다.</strong> 브라우저에서 직접 부를 수 없어 서버 사이드 fetch가 반드시 필요합니다. 이건 제약이 아니라 <strong>발표자료에 쓸 재료</strong>입니다 — "왜 서버가 필요한가"에 대한 기술적 근거가 됩니다.</p>
+<h3 id="26-mvp">2.6 MVP 범위와 컷라인</h3>
+<p><strong>반드시 (이것만 해도 완성품입니다)</strong>
+1. 공지 N건을 판독한 <code>notices.json</code> — 30~50건이면 충분합니다. 전수일 필요 없습니다.
+2. 검색창 + 결과 리스트 + 원문 링크
+3. "이 공지는 원래 이미지였습니다" 배지 — 문제를 화면에서 직접 보여주는 장치
+4. 원문 이미지와 판독 텍스트 나란히 보기
+5. <strong>★ 접수 순번 현황 시계열 그래프</strong> — 격일 게시물 여러 건을 하나의 추세선으로. 이게 독창성 15점의 핵심 증거물이라 <strong>1~4보다 먼저 만드세요.</strong></p>
+<p><strong>있으면 좋은 것</strong>
+6. 브라우저 내장 음성 낭독 (마지막 슬라이드 보너스용)
+7. 영어 번역 토글 (유학생)
+8. 고대비 / 큰 글씨 모드</p>
+<p><strong>컷라인 — 시간이 없으면 버릴 것</strong>
+9. 자동 갱신 파이프라인 (수동 빌드로 충분합니다)
+10. 사용자 제보 기능 (DB가 필요해지므로 오히려 위험)
+11. 전체 공지 전수 수집</p>
+<blockquote>
+<p>1~5만 있어도 루브릭의 구현 완성도 35점과 문제정의 25점이 전부 사정권입니다.
+<strong>기능을 늘리지 마세요.</strong> 실제 작동 15점은 기능 개수가 아니라 <strong>오류 0개</strong>에서 나옵니다.</p>
+</blockquote>
+<hr />
+<h2 id="3-3">3. 대안 3개</h2>
+<h3 id="a">대안 A — 「순천대 급식의 역사」 (데이터가 이미 손에 있음)</h3>
+<p>학교 식단 API에서 <strong>2019-10부터 현재까지 2,786건의 전체 식단 이력</strong>(아침·점심·저녁 메뉴 + 원산지)이 한 번의 POST로 나옵니다. 실측 확인했습니다.</p>
+<pre><code>POST /dorm/dv/dietView/selectDvList.do
+body: dietTy=향림관ㆍ청운관ㆍ웅지관 &amp; sysId=dorm     → 2,786건
+      dietTy=진리관ㆍ창조관                          → 1,653건
+</code></pre>
+<ul>
+<li><strong>강점</strong>: 데이터가 이미 있어 구현이 빠르고, 필드에 식단 주제가 <strong>0개</strong>입니다. 수년치 메뉴 통계는 그 자체로 재밌어서 좋아요가 붙습니다.</li>
+<li><strong>약점</strong>: "지속가능성 10점 = 실제 학내 도입"이 약합니다. 학교가 이걸 도입할 이유가 뚜렷하지 않습니다.</li>
+<li><strong>함정 (반드시 알아야 합니다)</strong>: <code>dietTy</code> 값의 가운뎃점은 일반 문자가 아니라 <strong>한글 채움 문자 U+318D(ㆍ)</strong>입니다. 값이 조금이라도 틀리면 오류가 나는 게 아니라 <strong>공휴일 15건만 담긴 2KB짜리 응답이 조용히 성공으로 돌아옵니다.</strong> 디버깅이 지옥이 되는 지점이라 카나리 검사를 넣으세요.</li>
+</ul>
+<h3 id="b-516">대안 B — 「제516호」 학보 복간</h3>
+<p>순천대신문은 <strong>515호(2023.09) 이후 웹 발간 이력이 없습니다.</strong> 3년째 멈춘 학보를 공개 데이터로 AI가 이어 발간하는 형식.
+- <strong>강점</strong>: 독창성 15점 만점 후보. 필드에 발행물 형식이 0개.
+- <strong>약점</strong>: "문제 발굴 10점 = 실제 불편"에 심사위원이 "그래서 무슨 불편?"이라고 물으면 방어가 어렵습니다. 실제 언론사명을 쓰는 것도 조심해야 합니다.</p>
+<h3 id="c">대안 C — 「학사 펌프」 학사일정을 구글 캘린더로 흘려보내기</h3>
+<p><code>POST /haksa/sv/schdulView/selectSvList.do</code>, body <code>sysId=SCNU</code> → <strong>학사일정 394건</strong>(2018~2027, 중간시험 포함)이 JSON으로 나옵니다. GET은 405입니다. 실측 확인했습니다.
+이걸 조회 UI로 만들지 말고 <strong>iCalendar 구독(<code>webcal://</code>)으로 발행</strong>해서, 학생이 이미 쓰는 캘린더 앱에 그냥 흡수되게 하는 것입니다.
+- <strong>강점</strong>: 경쟁작 #11 학사 캘린더는 "조회 화면을 통합"하는데, 이건 <strong>조회 화면을 아예 없앱니다.</strong> 출력 계층이 근본적으로 달라서 독창성 논거가 깔끔합니다. 구현도 가장 가볍고, DB·크론이 전부 불필요합니다.
+- <strong>약점</strong>: 데모가 밋밋합니다. QR을 찍어 캘린더 구독 다이얼로그가 뜨는 화면 녹화가 사실상 유일한 시각적 무기입니다.</p>
+<h3 id="d-vr">~~대안 D — 「말하는 캠퍼스」 VR 투어 활용~~ (검증 결과 폐기)</h3>
+<p>학교 VR 자산을 쓰려 했으나 실측에서 두 가지가 걸렸습니다.
+1. <strong><code>vr.scnu.ac.kr</code> 응답에 <code>Access-Control-Allow-Origin</code> 헤더가 없습니다.</strong> Vercel 도메인의 JS가 직접 fetch하면 브라우저가 차단하고, 파노라마를 WebGL 텍스처로 쓰면 cross-origin tainted로 실패합니다. 서버 프록시로 우회하면 파노라마 타일이 무거워 Hobby의 Fast Origin Transfer 10GB/월을 심사 기간에 태울 수 있습니다.
+2. <strong>자산이 학교 것이 아닐 수 있습니다.</strong> <code>tour.html</code>이 <code>//9f.co.kr/vr/snu_dev/</code>를 참조합니다 — 외부 벤더가 제작하고 일부를 벤더 CDN에서 서빙합니다. 촬영물 저작권이 벤더에 있을 가능성이 있습니다.</p>
+<p>→ <strong>"실제 작동 15점"의 최소 조건조차 세우기 어려워 권하지 않습니다.</strong></p>
+<hr />
+<h2 id="4-20">4. ★ 개발일지 — 가장 값싼 20점</h2>
+<p>루브릭의 AI 활용 역량 20점은 <strong>작품에 AI 기능이 들어갔는지가 아니라, 개발일지에 무엇이 적혀 있는지</strong>로 채점됩니다. 그리고 <strong>루브릭은 참가자에게 보이지 않습니다</strong> — 제가 소스를 확인했는데 <code>contest/[id]/page.tsx</code>에 rubric 참조가 없고 admin 화면에만 존재합니다. 경쟁자들은 이게 20점짜리라는 걸 모릅니다.</p>
+<p>플랫폼에 개발일지 전용 제출 필드가 없으므로 <strong>발표자료 PDF 안에 넣거나 배포 사이트에 <code>/devlog</code> 페이지로 만들고 양쪽에서 링크</strong>해야 합니다. PDF에 20장을 넣으면 전달력이 죽으니, <strong>PDF에 2~3장 요약 + 사이트에 전문</strong>이 맞습니다.</p>
+<p><strong>개발일지 목차 (이대로 쓰면 됩니다)</strong></p>
+<ol>
+<li><strong>막힌 지점 #1 — OCR이 표를 못 읽었다</strong>
+   - 증상: tesseract 한국어 모델로 공지 이미지를 돌렸더니 제목 한 줄만 나오고 표 본문이 통째로 비었다. 그런데 신뢰도는 94였다.
+   - AI와 함께 세운 가설 3개와 각각의 검증 결과
+   - 원인: 격자선을 글자로 오인식
+   - 해결: 선 제거 전처리 후 전체 셀 복구 (before/after 스크린샷 필수)</li>
+<li><strong>막힌 지점 #2 — 학교 API가 GET을 거부했다</strong>
+   - <code>selectSvList.do</code>가 GET에 405를 반환 → POST 전용임을 발견, 필요한 body 파라미터를 찾아낸 과정</li>
+<li><strong>프롬프트 설계와 반복 개선</strong>
+   - v1 프롬프트 → 출력이 자유서술이라 파싱 불가 → v2에서 <code>responseSchema</code>로 JSON 강제 → v3에서 표 병합셀 처리 추가
+   - <strong>각 버전의 실제 프롬프트 전문과 출력 샘플을 그대로 붙일 것</strong></li>
+<li><strong>AI에게 맡기지 않은 판단</strong>
+   - 왜 런타임 LLM 호출을 버리고 빌드타임으로 옮겼는가 (심사 기간 가동률 때문)
+   - 이 항목이 "AI와 협업"의 성숙도를 보여줍니다</li>
+</ol>
+<p><strong>핵심</strong>: 프롬프트 전문·오류 메시지·before/after 캡처를 <strong>날것 그대로</strong> 넣으세요. 정리된 회고문보다 시행착오의 흔적이 이 항목의 점수입니다.</p>
+<hr />
+<h2 id="5-og">5. 전시물 설계 — 슬라이드와 OG 카드</h2>
+<p>발표평가가 없으므로 <strong>PDF 발표자료가 곧 발표</strong>입니다. 그리고 전시관은 <code>projectUrl</code>을 읽어 Open Graph로 카드를 만듭니다.</p>
+<p><strong>OG 태그 (경쟁작 17개 중 14개가 비워둔 자리)</strong></p>
+<pre><code class="language-html">&lt;meta property=&quot;og:title&quot; content=&quot;Ctrl+F가 안 되는 학교&quot; /&gt;
+&lt;meta property=&quot;og:description&quot; content=&quot;순천대 공지의 절반은 이미지입니다. 검색도, 복사도, 낭독도 안 됩니다. AI로 전부 읽어 검색 가능하게 만들었습니다.&quot; /&gt;
+&lt;meta property=&quot;og:image&quot; content=&quot;https://.../og.png&quot; /&gt;  &lt;!-- 1200x630 --&gt;
+</code></pre>
+<p>og:image에는 <strong>왼쪽에 원본 PNG 공지, 오른쪽에 검색된 텍스트 결과</strong>를 나란히 넣으세요. 카드 한 장이 문제와 해결을 동시에 말합니다.</p>
+<p><strong>제출 필드 초안</strong>
+- 제목: <code>Ctrl+F가 안 되는 학교</code>
+- 한 줄 소개: <code>순천대 공지의 상당수는 이미지·한글파일이라 검색도 복사도 안 됩니다. AI가 전부 읽어 검색되게 만들고, 격일로 올라오는 기숙사 순번 공지는 하나의 추세 그래프로 합쳤습니다.</code>
+- 해시태그 8개(하나도 비우지 마세요): <code>순천대</code> <code>공지검색</code> <code>기숙사</code> <code>컷트라인</code> <code>OCR</code> <code>한글파일</code> <code>유학생</code> <code>바이브코딩</code></p>
+<p><strong>PDF 구성 (8~10장)</strong>
+1. <strong>표지 = 썸네일</strong>: 그 PNG 공지 스크린샷 위에 빨간 <code>Ctrl+F</code> 커서와 "검색 결과 0건". 제목 오버레이. — 이 한 장이 전시관 격자에서 첫인상을 결정합니다.
+2. 문제: 실제 공지 URL과 이미지, "합격 점수가 이 안에 있습니다"
+3. 문제의 크기: 이미지·HWPX 공지 비율, 영향받는 사람(저시력·유학생·모든 학생)
+4. 해결: 화면 캡처 — 검색어 입력 → 결과
+5. 접근 방식의 차별성: <strong>"다른 서비스는 런타임에 AI를 부릅니다. 이건 빌드 타임에 부르고 런타임엔 안 부릅니다"</strong> + 그래서 안 죽는다는 표
+6~7. 개발일지 요약 2장 (OCR 실패→해결 before/after)
+8. 학내 도입 시나리오
+9. 링크 모음 (배포 URL, /devlog)</p>
+<p><strong>첫 화면 30초</strong>: 로그인·빈 상태·로딩 없이 <strong>검색창 하나와 예시 검색어 버튼 3개</strong>("컷트라인", "장학금", "기숙사"). 심사위원이 클릭 한 번으로 결과를 봅니다.</p>
+<hr />
+<h2 id="6">6. 마감 전 체크리스트</h2>
+<ul>
+<li>[ ] <strong>지금 제출하세요.</strong> 좋아요 카운터에 리셋 로직이 없습니다(<code>likes.ts</code>는 increment만). 현재 55표는 그대로 갑니다. 늦게 낼수록 인기상에서 불리합니다.</li>
+<li>[ ] OG 태그 3종 삽입 후 실제 카드 렌더링 확인</li>
+<li>[ ] 배포 URL을 <strong>시크릿 창</strong>에서 열어 로그인·빈 화면 없이 뜨는지 확인</li>
+<li>[ ] 발표자료에 <strong>수익모델·시장성·로드맵을 쓰지 말 것</strong> (0점 항목입니다)</li>
+<li>[ ] "향후 계획"을 기능처럼 쓰지 말 것 (기능 충실도 10점 감점 근거)</li>
+<li>[ ] 개발일지를 PDF 2~3장 + <code>/devlog</code> 페이지로</li>
+<li>[ ] 공지 원문 링크·출처를 모든 항목에 병기 ("원문은 학교 공지" 표시). 학교 페이지에 공공누리 표시가 없고 푸터가 "All rights reserved"이므로, <strong>재배포가 아니라 보조 도구</strong>라는 성격이 화면에 분명해야 합니다</li>
+<li>[ ] 학교 이미지를 실시간으로 hotlink하지 말 것 — 변환 시점에 캐시하세요. <code>/upload/</code> 경로는 <code>robots.txt</code> 차단 대상이고 서버 변경 시 깨집니다</li>
+<li>[ ] <strong>"접근성 서비스"라는 표현을 쓰지 말 것</strong> (§2.2 프레이밍 주의)</li>
+<li>[ ] 09-04~09-07 심사 기간 중 사이트가 살아있는지 하루 한 번 확인</li>
+</ul>
+<hr />
+<h2 id="7">7. 확인하지 못한 것 (정직하게)</h2>
+<ul>
+<li><strong>전시관 로그인 화면 안쪽은 못 봤습니다.</strong> 확보한 17개는 <code>status == 'published'</code>인 것만이고, 초안(<code>draft</code>) 상태나 숨김 처리된 작품은 보이지 않습니다.</li>
+<li><strong>17개는 하한선입니다.</strong> 마감이 08-30이므로 최종 필드는 더 커집니다. 09-01에 다시 조회하면 전체를 볼 수 있습니다.</li>
+<li><strong>루브릭은 심사 시작 전까지 수정 가능한 문서입니다.</strong> 다만 심사가 시작되면(첫 평가 입력 시) 잠깁니다.</li>
+<li><strong>좋아요 집계 시작 시점</strong>이 08-31인지, 지금 카운터가 그대로 이어지는지는 리셋 스크립트 부재로 추정한 것입니다.</li>
+<li><strong>개발일지를 별도 채널(이메일 등)로 받는지</strong>는 공고에 언급이 없어 확인하지 못했습니다. 사업단(061-750-5396)에 물어보면 확실합니다.</li>
+<li>한국 대학 대회의 <strong>온라인 인기상 실증 사례</strong>는 50회 이상 검색했으나 1건도 찾지 못했습니다. 인기상 관련 조언은 Product Hunt·Ludum Dare 등 인접 영역에서 이전한 추론입니다.</li>
+</ul>
+<hr />
+<h2 id="_2">출처</h2>
+<p><strong>1차 (플랫폼 자체)</strong>
+1. <a href="https://github.com/LimJongTak/auraproject">github.com/LimJongTak/auraproject</a> — 대회 플랫폼 소스. <code>README.md</code>, <code>src/types/models.ts</code>, <code>firestore.rules</code>, <code>src/lib/constants/defaultRubric.ts</code>, <code>src/lib/firestore/likes.ts</code>, <code>src/app/contest/[id]/page.tsx</code>. HEAD <code>c6d9a6c</code>, 2026-08-26
+2. Firestore <code>categories/v31oVfNoVL3ZnTLNHSTd</code> — 루브릭 9항목, detailContent, 일정. 공개 읽기, 회수 2026-08-27
+3. Firestore <code>exhibitions</code> (<code>status == 'published'</code>) — 경쟁작 17건. 공개 읽기, 회수 2026-08-27
+4. <a href="https://www.scnu.ac.kr/SCNU/na/ntt/selectNttInfo.do?nttSn=281318318&amp;mi=1131">scnu.ac.kr 공고 nttSn=281318318</a> — 2026.08.21 등록
+5. <a href="https://www.scnu.ac.kr/dorm/na/ntt/selectNttInfo.do?nttSn=281312946&amp;mi=1337">생활관 컷트라인 공지 nttSn=281312946</a> + 본문 이미지 <code>IMG_152411.png</code> (1300×720, 121KB)
+6. <code>https://www.scnu.ac.kr/robots.txt</code>
+7. 학교 데이터 API 실측 — <code>selectSvList.do</code>(학사일정 394건), <code>selectDvList.do</code>(식단 2,786건), 생활관 RSS(175건), <code>vr.scnu.ac.kr/360vr</code></p>
+<p><strong>Vercel·인프라 공식 문서 (2026-08-27 접속)</strong>
+8. <a href="https://vercel.com/docs/limits">vercel.com/docs/limits</a> · <a href="https://vercel.com/docs/functions/limitations">functions/limitations</a> · <a href="https://vercel.com/docs/cron-jobs/usage-and-pricing">cron-jobs/usage-and-pricing</a> · <a href="https://vercel.com/docs/plans/hobby">plans/hobby</a> · <a href="https://vercel.com/docs/limits/fair-use-guidelines">limits/fair-use-guidelines</a> · <a href="https://vercel.com/legal/terms">legal/terms</a>
+9. <a href="https://supabase.com/docs/guides/platform/free-project-pausing">supabase.com/docs/guides/platform/free-project-pausing</a>
+10. <a href="https://ai.google.dev/gemini-api/docs/pricing">ai.google.dev/gemini-api/docs/pricing</a>
+11. <a href="https://www.npmjs.com/package/@ssabrojs/hwpxjs">registry.npmjs.org/@ssabrojs/hwpxjs</a> v0.4.0</p>
+<p><strong>참고 (경쟁 환경·인기상 인접 근거)</strong>
+12. 순천향대 2026 AI 바이브코딩 해커톤 — <a href="https://www.veritas-a.com/news/articleView.html?idxno=617643">베리타스알파</a>
+13. GitHub 캠퍼스 앱 사례 27종 (예: <a href="https://github.com/cchaksa/cchaksa-backend">cchaksa</a>, <a href="https://github.com/hanjo8813/PleaseGraduate">PleaseGraduate</a>, <a href="https://github.com/allcll/allcll-backend">allcll</a>, <a href="https://github.com/EAT-SSU/Android">EAT-SSU</a>)
+14. <a href="https://help.devpost.com/article/64-judging-public-voting">Devpost 공개투표 가이드</a> · <a href="https://rumorgames.com/ludum-dare-honest-guide/">Ludum Dare 가이드</a> · Tellis et al. 2019, Berger &amp; Milkman 2012</p></div></body></html>
