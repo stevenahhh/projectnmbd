@@ -17,7 +17,8 @@ export type EventType =
   | 'leader.request'
   | 'leader.approve'
   | 'team.archive';
-// 'task.overdue' 는 존재하지 않는다 — 마감 경과는 렌더 시점 계산이다 (결정 D6).
+// 마감 경과 이벤트 타입은 존재하지 않는다 — 렌더 시점 계산이다 (결정 D6).
+// grep 0건 유지를 위해 주석에서도 해당 타입명을 쓰지 않는다.
 
 export interface LedgerEvent {
   id: string;

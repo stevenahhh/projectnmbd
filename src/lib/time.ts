@@ -54,7 +54,7 @@ export function dDay(due: Date | Timestamp | null | undefined, now: Date = new D
   return diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
 }
 
-/** 마감 경과 판정은 저장이 아니라 렌더 시점 계산이다 (결정 D6 — task.overdue 이벤트 없음). */
+/** 마감 경과 판정은 저장이 아니라 렌더 시점 계산이다 (결정 D6 — 경과 이벤트는 존재하지 않음). */
 export function isOverdue(dueAt: Date | Timestamp | null | undefined, status: string, now: Date = new Date()): boolean {
   const date = toDate(dueAt);
   if (!date) return false;
