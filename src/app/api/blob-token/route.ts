@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server';
 import { generateClientTokenFromReadWriteToken } from '@vercel/blob/client';
 import { cert, getApps, initializeApp, type App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
+import { verifyIdTokenUid } from '@/lib/server/verify-id-token';
 import { MAX_FILE_BYTES, MAX_TEAM_BYTES } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -29,10 +29,8 @@ export async function POST(request: Request) {
     if (!idToken) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
 
     const app = initAdmin();
-    let uid: string;
-    try {
-      uid = (await getAuth(app).verifyIdToken(idToken)).uid;
-    } catch {
+    const uid = await verifyIdTokenUid(idToken);
+    if (!uid) {
       return NextResponse.json({ error: 'invalid token' }, { status: 401 });
     }
 

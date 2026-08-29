@@ -9,7 +9,7 @@
 import { NextResponse } from 'next/server';
 import { cert, getApps, initializeApp, type App } from 'firebase-admin/app';
 import { FieldValue, getFirestore, type WriteBatch, type DocumentReference } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
+import { verifyIdTokenUid } from '@/lib/server/verify-id-token';
 import { buildDemoDataset, estimateDemoWrites, DEMO_DATASET_WRITE_CAP, type DemoDataset } from '@/lib/demo-dataset';
 
 export const runtime = 'nodejs';
@@ -116,8 +116,11 @@ export async function POST(request: Request) {
     const app = initAdmin();
     let uid: string;
     try {
-      uid = (await getAuth(app).verifyIdToken(idToken)).uid;
+      uid = await verifyIdTokenUid(idToken);
     } catch {
+      return NextResponse.json({ error: 'invalid token' }, { status: 401 });
+    }
+    if (!uid) {
       return NextResponse.json({ error: 'invalid token' }, { status: 401 });
     }
 
