@@ -9,7 +9,7 @@ const NOW = new Date('2026-08-29T09:00:00Z');
 const UIDS = ['u_mindy', 'u_junho', 'u_seoyeon', 'u_taeyun'];
 
 function event(uid: string, type: AggregatableEvent['type'], at: string | null, payload: Record<string, unknown> = {}): AggregatableEvent {
-  return { uid, type, payload, at: at ? new Date(at) : null };
+  return { actorUid: uid, type, payload, at: at ? new Date(at) : null };
 }
 
 function task(id: string, assignee: string, dueAt: string, status: 'todo' | 'done'): AggregatableTask {
