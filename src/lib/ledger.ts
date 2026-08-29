@@ -55,7 +55,3 @@ export async function writeEvent(db: Firestore, write: LedgerWrite): Promise<str
   await batch.commit();
   return eventRef.id;
 }
-
-export function newDocRef(db: Firestore, teamId: string, sub: string): DocumentReference {
-  return doc(collection(db, 'teams', teamId, sub));
-}

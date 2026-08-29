@@ -99,8 +99,6 @@ export function DashboardPanel({ team, events, tasks, profile }: DashboardPanelP
           <CardContent className="flex flex-col gap-5">
             {result.members.map((member) => {
               const info = team.members[member.uid];
-              const isSelf = profile && member.uid === Object.keys(team.members).find(() => false);
-              void isSelf;
               return (
                 <div key={member.uid} className="flex flex-col gap-1.5">
                   <div className="flex items-baseline justify-between text-sm">
