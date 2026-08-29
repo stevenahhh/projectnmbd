@@ -114,12 +114,7 @@ export async function POST(request: Request) {
 
   try {
     const app = initAdmin();
-    let uid: string;
-    try {
-      uid = await verifyIdTokenUid(idToken);
-    } catch {
-      return NextResponse.json({ error: 'invalid token' }, { status: 401 });
-    }
+    const uid = await verifyIdTokenUid(idToken);
     if (!uid) {
       return NextResponse.json({ error: 'invalid token' }, { status: 401 });
     }
