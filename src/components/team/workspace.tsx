@@ -11,6 +11,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { useTeamData } from '@/hooks/use-team-data';
 import { buildNotifications, STAGE_LABEL, type DeadlineItem } from '@/lib/notifications';
 import { DashboardPanel } from './dashboard-panel';
+import { Tutorial } from './tutorial';
 import { TasksPanel } from './tasks-panel';
 import { ChatPanel } from './chat-panel';
 import { MeetingsPanel } from './meetings-panel';
@@ -136,13 +137,14 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
           <Button asChild variant="ghost">
             <Link href="/teams">내 팀</Link>
           </Button>
+          <Tutorial />
         </div>
       </header>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as WorkspaceTab)}>
         <TabsList className="flex-wrap">
           {TABS.map((t) => (
-            <TabsTrigger key={t} value={t}>
+            <TabsTrigger key={t} value={t} {...(t === 'tasks' ? { id: 'tutorial-tasks-tab' } : {})}>
               {TAB_LABELS[t]}
             </TabsTrigger>
           ))}

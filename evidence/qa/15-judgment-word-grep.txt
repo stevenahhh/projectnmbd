@@ -1,0 +1,9 @@
+# 판단어 grep (태스크 15 QA)
+0건 — 통과
+
+# task.overdue grep (태스크 8 QA)
+src/lib/time.ts:57:/** 마감 경과 판정은 저장이 아니라 렌더 시점 계산이다 (결정 D6 — task.overdue 이벤트 없음). */
+src/lib/types.ts:20:// 'task.overdue' 는 존재하지 않는다 — 마감 경과는 렌더 시점 계산이다 (결정 D6).
+
+# alert grep (태스크 24 QA)
+0건 — 통과

@@ -5,6 +5,7 @@ import { Download } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { aggregateContribution, type AggregatableEvent, type AggregatableTask } from '@/lib/contribution';
 import { formatKST } from '@/lib/time';
@@ -81,16 +82,19 @@ export function DashboardPanel({ team, events, tasks, profile }: DashboardPanelP
   return (
     <div className="flex flex-col gap-4">
       <div ref={surfaceRef} id="report-surface" className="flex flex-col gap-4 bg-background p-1">
-        <Card>
+        <Card id="tutorial-bars">
           <CardHeader className="flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">기여도 — {team.name}</CardTitle>
               <p className="text-muted-foreground mt-1 text-sm">
                 {team.goal} · D-{Math.max(0, Math.ceil((team.dueAt.toDate().getTime() - Date.now()) / 86400000))} · 가중치 (문서 {team.weights.doc} / 자료 {team.weights.file} / 할 일 {team.weights.task} / 회의 {team.weights.meeting} / 수동 {team.weights.note}) · 활동일은 참고축
               </p>
+              <Badge id="tutorial-ledger" variant="secondary" className="mt-2">
+                활동 원장 — 서버 시각 기록 · 추가만 가능
+              </Badge>
             </div>
             <div className="flex gap-2" data-no-export>
-              <Button size="sm" onClick={() => void exportPng(false)} disabled={exporting}>
+              <Button id="tutorial-export" size="sm" onClick={() => void exportPng(false)} disabled={exporting}>
                 <Download /> 리포트 PNG
               </Button>
               <Button size="sm" variant="outline" onClick={() => void exportPng(true)} disabled={exporting}>
@@ -144,7 +148,7 @@ export function DashboardPanel({ team, events, tasks, profile }: DashboardPanelP
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="tutorial-timeline">
           <CardHeader>
             <CardTitle className="text-base">시간축 (서버 시각 · {formatKST(team.startAt, 'date')} ~)</CardTitle>
             <p className="text-muted-foreground text-xs">
