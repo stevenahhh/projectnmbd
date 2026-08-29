@@ -34,8 +34,9 @@ class BatchWriter {
 
   flush(): Promise<void>[] {
     if (this.count === 0) return [];
+    const flushed = this.count;   // 카운터는 리셋 전에 캡처 — 리셋 후 참조하면 0이 더해진다
     const promise = this.batch.commit().then(() => {
-      this.committed += this.count;
+      this.committed += flushed;
     });
     this.batch = this.db.batch();
     this.count = 0;
@@ -133,10 +134,16 @@ export async function POST(request: Request) {
 
     const written = await writeDataset(db, dataset);
 
+    // admin SDK 는 set() 의 점 표기 키를 리터럴 필드명으로 저장한다 (웹 SDK 와 다름).
+    // 기존 teams 맵을 읽어 병합한 뒤 통째로 기록한다.
+    const currentTeams = (userSnap.data()?.teams as Record<string, string> | undefined) ?? {};
     await userRef.set(
       {
-        [`teams.${dataset.teamId}`]: '팀장',
-        [`teams.${dataset.archivedTeamId}`]: '팀장',
+        teams: {
+          ...currentTeams,
+          [dataset.teamId]: '팀장',
+          [dataset.archivedTeamId]: '팀장',
+        },
         demoBootstrappedAt: firestore.FieldValue.serverTimestamp(),
       },
       { merge: true },
