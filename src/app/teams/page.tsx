@@ -79,7 +79,6 @@ export default function TeamsPage() {
   };
 
   const activeTeams = teams.filter((t) => !t.archived);
-  const archivedTeams = teams.filter((t) => t.archived);
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-4 py-8">

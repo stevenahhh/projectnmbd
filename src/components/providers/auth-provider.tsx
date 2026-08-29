@@ -111,7 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     bootstrapRan.current = true;
-    void triggerBootstrap();
+    // 이펙트 안에서 동기 setState 를 유발하지 않도록 다음 틱으로 미룬다
+    const timer = setTimeout(() => void triggerBootstrap(), 0);
+    return () => clearTimeout(timer);
   }, [state.status, state.profile, triggerBootstrap]);
 
   return <AuthContext.Provider value={{ ...state, saveProfile, refreshProfile, triggerBootstrap }}>{children}</AuthContext.Provider>;

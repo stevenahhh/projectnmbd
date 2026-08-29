@@ -22,16 +22,6 @@ interface DocsPanelProps {
  */
 export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [draft, setDraft] = useState('');
-  const [newTitle, setNewTitle] = useState('');
-  const [creating, setCreating] = useState(false);
-
-  const selected = docs.find((d) => d.id === selectedId) ?? null;
-  const lockedByOther = selected?.lockedBy && selected.lockedBy !== uid;
-
-  useEffect(() => {
-    if (selected) setDraft(selected.body);
-  }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 잠금 해제 — 편집 화면을 떠날 때
   useEffect(() => {
@@ -44,12 +34,24 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
 
   const openDoc = async (doc: TeamDoc) => {
     setSelectedId(doc.id);
-    setDraft(doc.body);
     try {
       await setDocLock(team.id, doc.id, uid);
     } catch {
       // 잠금 표시 실패는 편집을 막지 않는다
     }
+  };
+
+  const selected = docs.find((d) => d.id === selectedId) ?? null;
+  const lockedByOther = Boolean(selected?.lockedBy) && selected!.lockedBy !== uid;
+  // 임시 원고는 문서 id 별로 관리 — 선택 변경 이펙트에서 setState 하는 패턴을 피한다
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [newTitle, setNewTitle] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  const draft = selected ? (drafts[selected.id] ?? selected.body) : '';
+  const setDraft = (value: string) => {
+    if (!selected) return;
+    setDrafts((prev) => ({ ...prev, [selected.id]: value }));
   };
 
   const save = async () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Bell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -37,14 +37,13 @@ const TAB_LABELS: Record<WorkspaceTab, string> = {
 
 /** 브라우저 Notification 권한은 접속 중 1회만 요청한다. */
 function useBrowserNotificationPermission(): boolean {
-  const [granted, setGranted] = useState(false);
+  const [granted, setGranted] = useState<boolean>(() =>
+    typeof Notification !== 'undefined' && Notification.permission === 'granted',
+  );
   useEffect(() => {
-    if (typeof Notification === 'undefined') return;
-    if (Notification.permission === 'granted') {
-      setGranted(true);
-    } else if (Notification.permission === 'default') {
-      void Notification.requestPermission().then((result) => setGranted(result === 'granted'));
-    }
+    if (typeof Notification === 'undefined' || Notification.permission !== 'default') return;
+    // 요청은 비동기 — 이펙트에서 동기 setState 가 일어나지 않는다
+    void Notification.requestPermission().then((result) => setGranted(result === 'granted'));
   }, []);
   return granted;
 }
@@ -63,19 +62,18 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
     return buildNotifications(items, new Date());
   }, [data.team, data.tasks]);
 
-  // 새 단계 알림 발화 — 알림함 + 브라우저 Notification
-  const [seen, setSeen] = useState<Set<string>>(new Set());
+  // 새 단계 알림 발화 — 알림함 + 브라우저 Notification. 발화 이력은 ref 로 관리한다.
+  const seen = useRef<Set<string>>(new Set());
   useEffect(() => {
-    const fresh = notifications.filter((n) => !seen.has(n.id));
-    if (fresh.length > 0) {
-      setSeen((prev) => new Set([...prev, ...fresh.map((n) => n.id)]));
-      if (notifyGranted) {
-        for (const n of fresh.slice(0, 2)) {
-          new Notification('팀플 원장', { body: n.message });
-        }
+    const fresh = notifications.filter((n) => !seen.current.has(n.id));
+    if (fresh.length === 0) return;
+    seen.current = new Set([...seen.current, ...fresh.map((n) => n.id)]);
+    if (notifyGranted) {
+      for (const n of fresh.slice(0, 2)) {
+        new Notification('팀플 원장', { body: n.message });
       }
     }
-  }, [notifications, seen, notifyGranted]);
+  }, [notifications, notifyGranted]);
 
   if (status !== 'ready' || !uid) {
     return <p className="text-muted-foreground p-10 text-center text-sm">들어가는 중…</p>;

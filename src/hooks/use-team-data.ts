@@ -55,7 +55,6 @@ export function useTeamData(teamId: string): TeamData {
 
   useEffect(() => {
     const unsubs: Unsubscribe[] = [];
-    setData((prev) => ({ ...prev, loading: true, error: null }));
 
     let ready = 0;
     const markReady = () => {

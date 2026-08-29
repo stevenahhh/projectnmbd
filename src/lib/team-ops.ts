@@ -3,34 +3,19 @@
  * 서브컬렉션 컬렉션명은 규칙의 명시 매치와 일치해야 한다 (S8).
  */
 import {
-  addDoc,
   collection,
   doc,
-  getDoc,
-  increment,
   limit,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
-  setDoc,
   updateDoc,
-  where,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase/client';
 import { writeEvent } from '@/lib/ledger';
-import type {
-  FileComment,
-  LeaderRequest,
-  Meeting,
-  Message,
-  Team,
-  TeamDoc,
-  TeamFile,
-  TeamTask,
-} from '@/lib/types';
-import { MAX_FILE_BYTES, MAX_TEAM_BYTES } from '@/lib/types';
+import type { Meeting, Message, TeamDoc, TeamTask } from '@/lib/types';
 
 // ── 할 일 ────────────────────────────────────────────────
 

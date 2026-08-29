@@ -2,7 +2,7 @@
  * PDF 덱 생성기 (태스크 31) — §5 구성 11장. bun scripts/build-deck.ts 로 실행.
  * 텍스트 기반 PDF. Cron 문구·판단어 없음. 「증거 도구」 프레이밍 + 한계 정직 고지.
  */
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, rgb } from 'pdf-lib';
 import * as fontkitModule from 'fontkit';
 import { readFileSync, writeFileSync } from 'node:fs';
 

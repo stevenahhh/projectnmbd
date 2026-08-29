@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toDate } from '@/lib/time';
 import type { Team, TeamTask } from '@/lib/types';
@@ -14,6 +14,8 @@ const BAR_COLORS = ['#0ea5e9', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#647
 
 /** 간트 타임라인 (§2.8-4) — SVG 직접 작성, 라이브러리 없음. 마일스톤 막대 + 할 일 마커. */
 export function GanttPanel({ team, tasks }: GanttPanelProps) {
+  // 렌더 도중 Date.now() 를 부르는 것은 순수성 위반 — 마운트 시점 한 번만 캡처한다.
+  const [nowMs] = useState(() => Date.now());
   const { milestones, regularTasks, startMs, endMs } = useMemo(() => {
     const milestoneTasks = tasks.filter((t) => t.milestoneId && t.milestoneStartAt);
     const rest = tasks.filter((t) => !t.milestoneId);
@@ -91,7 +93,7 @@ export function GanttPanel({ team, tasks }: GanttPanelProps) {
                 />
                 <text x={x(start) + 8} y={y + 15} fontSize={11} fill="#ffffff" fontWeight={600}>
                   {task.title}
-                  {task.status === 'done' ? ' · 완료' : end < Date.now() ? '' : ' · 진행/예정'}
+                  {task.status === 'done' ? ' · 완료' : end < nowMs ? '' : ' · 진행/예정'}
                 </text>
               </g>
             );
@@ -103,7 +105,7 @@ export function GanttPanel({ team, tasks }: GanttPanelProps) {
             const doneColor = '#10b981';
             const lateColor = '#ef4444';
             const todoColor = '#0ea5e9';
-            const color = task.status === 'done' ? doneColor : due < Date.now() ? lateColor : todoColor;
+            const color = task.status === 'done' ? doneColor : due < nowMs ? lateColor : todoColor;
             return (
               <g key={task.id}>
                 <circle cx={Math.min(width - 6, Math.max(6, x(due)))} cy={y + barHeight / 2} r={6} fill={color} />

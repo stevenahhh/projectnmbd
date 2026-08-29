@@ -11,14 +11,6 @@ import { aggregateContribution, type AggregatableEvent, type AggregatableTask } 
 import { formatKST } from '@/lib/time';
 import type { LedgerEvent, Team, TeamTask, UserProfile } from '@/lib/types';
 
-const AXIS_LABELS = {
-  doc: '문서',
-  file: '자료',
-  task: '할 일',
-  meeting: '회의',
-  note: '수동 기록',
-} as const;
-
 interface DashboardPanelProps {
   team: Team;
   events: LedgerEvent[];
@@ -33,6 +25,8 @@ interface DashboardPanelProps {
 export function DashboardPanel({ team, events, tasks, profile }: DashboardPanelProps) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+  // 렌더 도중 Date.now() 를 부르는 것은 순수성 위반 — 마운트 시점 한 번만 캡처한다.
+  const [now] = useState(() => new Date());
 
   const result = useMemo(() => {
     const memberUids = Object.keys(team.members);
@@ -87,7 +81,7 @@ export function DashboardPanel({ team, events, tasks, profile }: DashboardPanelP
             <div>
               <CardTitle className="text-lg">기여도 — {team.name}</CardTitle>
               <p className="text-muted-foreground mt-1 text-sm">
-                {team.goal} · D-{Math.max(0, Math.ceil((team.dueAt.toDate().getTime() - Date.now()) / 86400000))} · 가중치 (문서 {team.weights.doc} / 자료 {team.weights.file} / 할 일 {team.weights.task} / 회의 {team.weights.meeting} / 수동 {team.weights.note}) · 활동일은 참고축
+                {team.goal} · D-{Math.max(0, Math.ceil((team.dueAt.toDate().getTime() - now.getTime()) / 86400000))} · 가중치 (문서 {team.weights.doc} / 자료 {team.weights.file} / 할 일 {team.weights.task} / 회의 {team.weights.meeting} / 수동 {team.weights.note}) · 활동일은 참고축
               </p>
               <Badge id="tutorial-ledger" variant="secondary" className="mt-2">
                 활동 원장 — 서버 시각 기록 · 추가만 가능
