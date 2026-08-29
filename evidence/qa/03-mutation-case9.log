@@ -1,0 +1,25 @@
+ ❯ node_modules/@firebase/rules-unit-testing/src/util.ts:137:8
+ ❯ tests/rules/rules.test.ts:241:5
+    239|
+    240|     // 다른 필드를 함께 바꾸면 거부
+    241|     await assertFails(
+       |     ^
+    242|       updateDoc(doc(db, 'teams', TEAM), {
+    243|         [`members.${OUTSIDER}`]: { ...memberEntry('새 멤버'), inviteToken…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 passed (13)
+   Start at  03:15:52
+   Duration  1.37s (transform 13ms, setup 0ms, import 70ms, tests 1.24s, environment 0ms)
+
+⚠  Script exited unsuccessfully (code 1)
+i  emulators: Shutting down emulators.
+i  firestore: Stopping Firestore Emulator
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator
+
+Error: Script "bunx vitest run tests/rules" exited with code 1
+error: script "test:rules" exited with code 1
