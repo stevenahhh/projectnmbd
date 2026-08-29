@@ -149,7 +149,7 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
         </TabsList>
       </Tabs>
 
-      {tab === 'dashboard' ? <DashboardPanel team={team} events={data.events} tasks={data.tasks as TeamTask[]} profile={profile} /> : null}
+      {tab === 'dashboard' ? <DashboardPanel team={team} events={data.events} tasks={data.tasks as TeamTask[]} /> : null}
       {tab === 'tasks' ? <TasksPanel team={team} tasks={data.tasks} uid={uid} /> : null}
       {tab === 'chat' ? <ChatPanel team={team} messages={data.messages} uid={uid} /> : null}
       {tab === 'meetings' ? <MeetingsPanel team={team} meetings={data.meetings} uid={uid} hasAiKey={hasAiKey} /> : null}

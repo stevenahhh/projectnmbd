@@ -9,20 +9,19 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { aggregateContribution, type AggregatableEvent, type AggregatableTask } from '@/lib/contribution';
 import { formatKST } from '@/lib/time';
-import type { LedgerEvent, Team, TeamTask, UserProfile } from '@/lib/types';
+import type { LedgerEvent, Team, TeamTask } from '@/lib/types';
 
 interface DashboardPanelProps {
   team: Team;
   events: LedgerEvent[];
   tasks: TeamTask[];
-  profile: UserProfile | null;
 }
 
 /**
  * 대시보드 (§2.2-①) — 막대(총량) 주인공 + 시간축 분포 보조.
  * 판단어 0 — 시스템은 판정하지 않고 공백이 보이게 할 뿐이다 (§3).
  */
-export function DashboardPanel({ team, events, tasks, profile }: DashboardPanelProps) {
+export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
   // 렌더 도중 Date.now() 를 부르는 것은 순수성 위반 — 마운트 시점 한 번만 캡처한다.
