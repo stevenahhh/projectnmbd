@@ -70,3 +70,12 @@ https://temporary-agile-nickel-vv5lsb8.vercel.app → 200, /onboarding 200, /me 
 POST /api/bootstrap-demo → 500 (FIREBASE_SERVICE_ACCOUNT 미설정 — 예상된 실패, 빈 팀 fallback 동작 대상)
 랜딩 og: 태그 1행(og:title·description·image·type 포함)
 ```
+
+## prod E2E 실측 추가 (2026-08-30, https://99-aibootcamp-vibecoding.vercel.app)
+
+- 실제 익명 가입(identitytoolkit signUp) → bootstrap-demo 호출 → `ok:true, writes:322, teamId:demo-…`
+- 동일 uid 재호출 → `skipped:true` + 동일 팀 반환 — **멱등 실측 통과 (F3)**
+- 서로 다른 uid 2개 → 서로 다른 teamId — **방문자 격리 실측 통과 (F3)**
+- Firestore 무결성(admin 직독): events 178 · messages 86 · tasks 27 · docs 3 · versions 11 · files 5 · comments 6 · meetings 4 · 멤버 4 · 팀장=방문자(민지) · 보관팀 존재
+- 미인증 POST → 401 / 가짜 토큰 → 401 (인증 경계 통과)
+- 데이터 무결성 기반: admin SDK set()의 점 표기 키는 리터럴 필드명으로 저장됨(웹 SDK와 다름) → teams 맵 병합 기록으로 수정, 히스토리 커밋 참조
