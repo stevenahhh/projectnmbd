@@ -447,18 +447,20 @@ export function buildDemoDataset(visitorUid: string, bootstrap: Date): DemoDatas
   const tasks: DemoDataset['tasks'] = [];
   for (const t of [...DEMO_TASKS, ...DEMO_MILESTONES]) {
     const dueAt = at(t.due);
-    tasks.push({
+    // admin Firestore 는 undefined 를 거부한다 — 선택 필드는 값이 있을 때만 실린다
+    const task: DemoDataset['tasks'][number] = {
       title: t.title,
-      desc: t.desc,
       actorUid: uidOf(0),
       assigneeUid: uidOf(t.assignee),
       dueAt,
       status: t.status,
-      doneAt: t.done ? at(t.done) : undefined,
-      milestoneId: t.milestoneId,
-      milestoneStartAt: t.milestoneStartAt ? at(t.milestoneStartAt) : undefined,
       order: t.order,
-    });
+    };
+    if (t.desc !== undefined) task.desc = t.desc;
+    if (t.done) task.doneAt = at(t.done);
+    if (t.milestoneId) task.milestoneId = t.milestoneId;
+    if (t.milestoneStartAt) task.milestoneStartAt = at(t.milestoneStartAt);
+    tasks.push(task);
     events.push({
       type: 'task.create',
       actorUid: uidOf(0),
