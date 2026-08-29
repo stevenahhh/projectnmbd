@@ -5,22 +5,11 @@
  */
 import { NextResponse } from 'next/server';
 import { generateClientTokenFromReadWriteToken } from '@vercel/blob/client';
-import { cert, getApps, initializeApp, type App } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { loadAdmin, initAdmin } from '@/lib/server/admin';
 import { verifyIdTokenUid } from '@/lib/server/verify-id-token';
 import { MAX_FILE_BYTES, MAX_TEAM_BYTES } from '@/lib/types';
 
 export const runtime = 'nodejs';
-
-let adminApp: App | null = null;
-
-function initAdmin(): App {
-  if (adminApp) return adminApp;
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT 가 설정되지 않았다');
-  adminApp = getApps().length ? getApps()[0] : initializeApp({ credential: cert(JSON.parse(raw)) });
-  return adminApp;
-}
 
 export async function POST(request: Request) {
   try {
@@ -28,7 +17,8 @@ export async function POST(request: Request) {
     const idToken = authHeader.replace(/^Bearer\s+/i, '');
     if (!idToken) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
 
-    const app = initAdmin();
+    const { app, firestore } = await loadAdmin();
+    initAdmin(app);
     const uid = await verifyIdTokenUid(idToken);
     if (!uid) {
       return NextResponse.json({ error: 'invalid token' }, { status: 401 });
@@ -41,7 +31,7 @@ export async function POST(request: Request) {
     }
 
     // 비멤버 403 — 규칙과 동일 계약을 서버 경계에서도 강제
-    const teamSnap = await getFirestore(app).collection('teams').doc(teamId).get();
+    const teamSnap = await firestore.getFirestore().collection('teams').doc(teamId).get();
     if (!teamSnap.exists) return NextResponse.json({ error: 'team not found' }, { status: 404 });
     const team = teamSnap.data()!;
     if (!(uid in (team.members ?? {}))) {
@@ -53,7 +43,7 @@ export async function POST(request: Request) {
     }
 
     // 팀 총량 확인 — files 하위 sizeBytes 합산
-    const filesSnap = await getFirestore(app).collection('teams').doc(teamId).collection('files').get();
+    const filesSnap = await firestore.getFirestore().collection('teams').doc(teamId).collection('files').get();
     const totalBytes = filesSnap.docs.reduce((sum, d) => sum + ((d.data().sizeBytes as number) ?? 0), 0);
     if (totalBytes + sizeBytes > MAX_TEAM_BYTES) {
       return NextResponse.json({ error: '팀 자료 용량 200MB 를 초과했어요' }, { status: 413 });

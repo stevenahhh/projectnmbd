@@ -7,38 +7,27 @@
  * 멱등 — 이미 부트스트랩된 uid 면 스킵. 실패 시 클라이언트는 빈 팀 fallback 으로 진입한다.
  */
 import { NextResponse } from 'next/server';
-import { cert, getApps, initializeApp, type App } from 'firebase-admin/app';
-import { FieldValue, getFirestore, type WriteBatch, type DocumentReference } from 'firebase-admin/firestore';
+import { loadAdmin, initAdmin } from '@/lib/server/admin';
 import { verifyIdTokenUid } from '@/lib/server/verify-id-token';
 import { buildDemoDataset, estimateDemoWrites, DEMO_DATASET_WRITE_CAP, type DemoDataset } from '@/lib/demo-dataset';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-let adminApp: App | null = null;
-
-function initAdmin(): App {
-  if (adminApp) return adminApp;
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT 가 설정되지 않았다');
-  adminApp = getApps().length ? getApps()[0] : initializeApp({ credential: cert(JSON.parse(raw)) });
-  return adminApp;
-}
-
 /**
  * Firestore 단일 배치는 500건 상한 — 450건 단위로 커밋한다.
  * Admin SDK 쓰기는 규칙을 통과하지 않는다(스모크테스트가 별도인 이유 — 태스크 16).
  */
 class BatchWriter {
-  private batch: WriteBatch;
+  private batch: import('firebase-admin/firestore').WriteBatch;
   private count = 0;
   private committed = 0;
 
-  constructor(private db: FirebaseFirestore.Firestore) {
+  constructor(private db: import('firebase-admin/firestore').Firestore) {
     this.batch = db.batch();
   }
 
-  set(ref: DocumentReference, data: unknown) {
+  set(ref: import('firebase-admin/firestore').DocumentReference, data: unknown) {
     this.batch.set(ref, data as FirebaseFirestore.DocumentData);
     if (++this.count >= 450) this.flush();
   }
@@ -58,7 +47,7 @@ class BatchWriter {
   }
 }
 
-async function writeDataset(db: FirebaseFirestore.Firestore, dataset: DemoDataset): Promise<number> {
+async function writeDataset(db: import('firebase-admin/firestore').Firestore, dataset: DemoDataset): Promise<number> {
   const writer = new BatchWriter(db);
   const teamRef = db.collection('teams').doc(dataset.teamId);
   const archiveRef = db.collection('teams').doc(dataset.archivedTeamId);
@@ -73,7 +62,7 @@ async function writeDataset(db: FirebaseFirestore.Firestore, dataset: DemoDatase
   await Promise.all(writer.flush());
 
   // 파일 문서를 먼저 만들어 id 확보 → 첨삭 댓글이 그 하위로 들어간다
-  const fileRefs: DocumentReference[] = [];
+  const fileRefs: import('firebase-admin/firestore').DocumentReference[] = [];
   for (const f of dataset.files) {
     const ref = teamRef.collection('files').doc();
     fileRefs.push(ref);
@@ -113,13 +102,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const app = initAdmin();
+    const { app, firestore } = await loadAdmin();
+    initAdmin(app);
+    const db = firestore.getFirestore();
     const uid = await verifyIdTokenUid(idToken);
     if (!uid) {
       return NextResponse.json({ error: 'invalid token' }, { status: 401 });
     }
 
-    const db = getFirestore(app);
     const userRef = db.collection('users').doc(uid);
     const userSnap = await userRef.get();
 
@@ -147,7 +137,7 @@ export async function POST(request: Request) {
       {
         [`teams.${dataset.teamId}`]: '팀장',
         [`teams.${dataset.archivedTeamId}`]: '팀장',
-        demoBootstrappedAt: FieldValue.serverTimestamp(),
+        demoBootstrappedAt: firestore.FieldValue.serverTimestamp(),
       },
       { merge: true },
     );
