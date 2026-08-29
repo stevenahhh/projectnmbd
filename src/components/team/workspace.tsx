@@ -49,7 +49,7 @@ function useBrowserNotificationPermission(): boolean {
 }
 
 export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: string; initialTab?: WorkspaceTab }) {
-  const { uid, profile, status } = useAuth();
+  const { uid, status } = useAuth();
   const data = useTeamData(teamId);
   const [tab, setTab] = useState<WorkspaceTab>(initialTab);
   const notifyGranted = useBrowserNotificationPermission();
