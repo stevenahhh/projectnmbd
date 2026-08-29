@@ -81,7 +81,9 @@ export interface TeamTask {
   dueAt: Timestamp;
   status: TaskStatus;
   doneAt?: Timestamp | null;
+  /** 간트 마일스톤 막대 — 이 값이 있으면 간트 막대로 렌더한다. */
   milestoneId?: string | null;
+  milestoneStartAt?: Timestamp | null;
   order: number;
 }
 

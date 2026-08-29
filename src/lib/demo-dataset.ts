@@ -197,7 +197,7 @@ export const DEMO_MILESTONES: DemoTaskDef[] = [
 export interface DemoDocDef {
   title: string;
   /** [day, hour, actor, body, charsDelta] — 버전 순서대로. */
-  versions: [number, number, string, number][];
+  versions: [number, number, number, string, number][];
 }
 
 export const DEMO_DOCS: DemoDocDef[] = [
@@ -476,9 +476,7 @@ export function buildDemoDataset(visitorUid: string, bootstrap: Date): DemoDatas
   // 문서 + 버전 + doc.edit
   const docs: DemoDataset['docs'] = [];
   DEMO_DOCS.forEach((d) => {
-    const versions = d.versions.map(([day, hour, actor, body], index) => {
-      const previous = index > 0 ? d.versions[index - 1][3].length : 0;
-      const charsDelta = body.length - previous;
+    const versions = d.versions.map(([day, hour, actor, body, charsDelta], index) => {
       events.push({
         type: 'doc.edit',
         actorUid: uidOf(actor),
