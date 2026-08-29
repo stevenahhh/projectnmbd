@@ -87,7 +87,7 @@ describe('기여도 집계 (A.6)', () => {
   it('활동일은 참고축 — 종합 점수에 들어가지 않는다', () => {
     // u_mindy 는 10일 매일 접속(메시지만), u_junho 는 1일 접속 + 문서 3000자
     const events: AggregatableEvent[] = [
-      ...Array.from({ length: 10 }, (_, i) => event('u_mindy', 'message.post', \`2026-08-\${10 + i}T05:00:00Z\`, { chars: 5 })),
+      ...Array.from({ length: 10 }, (_, i) => event('u_mindy', 'message.post', `2026-08-${10 + i}T05:00:00Z`, { chars: 5 })),
       event('u_junho', 'doc.edit', '2026-08-12T05:00:00Z', { charsDelta: 3000 }),
     ];
     const result = aggregateContribution({
