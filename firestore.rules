@@ -1,0 +1,226 @@
+rules_version = '2';
+
+// 팀플 원장 — strict 다중사용자 보안 규칙 (S1~S9)
+//
+// 설계 원칙
+//   S1 앱의 모든 읽기·쓰기가 이 파일을 통과한다. 클라이언트에 admin 권한 없음.
+//   S2 비멤버는 팀의 어떤 문서도 get/list 할 수 없다.
+//   S3 합류는 유효한 invite 토큰 경유 + 「members[본인] 추가」 단일 변경일 때만.
+//   S4 invites 는 get 만. list·delete 금지.
+//   S5 팀장 전용 행위(역할·보관·삭제·기간·팀장교체)는 규칙 레벨 게이트.
+//   S6 팀장 승인 플로우는 teams/{id}/leaderRequests/{uid} 서브컬렉션.
+//   S7 events 는 create only + actorUid·at 강제.
+//   S8 서브컬렉션 와일드카드 금지 — 컬렉션별 명시 매치.
+//   S9 익명 uid 특례 0.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── 공통 헬퍼 ──────────────────────────────────────────────
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function teamDoc(teamId) {
+      return get(/databases/$(database)/documents/teams/$(teamId)).data;
+    }
+
+    function teamExists(teamId) {
+      return exists(/databases/$(database)/documents/teams/$(teamId));
+    }
+
+    // 멤버 판정: 팀 문서의 members 맵에 본인 uid 가 있을 것.
+    function member(teamId) {
+      return signedIn()
+        && teamExists(teamId)
+        && request.auth.uid in teamDoc(teamId).members;
+    }
+
+    // 보관(archived)·소프트 삭제(deleted) 된 팀은 읽기 전용.
+    function teamWritable(teamId) {
+      return teamDoc(teamId).archived != true
+        && teamDoc(teamId).deleted != true;
+    }
+
+    // 쓰기 가능한 팀의 멤버.
+    function activeMember(teamId) {
+      return member(teamId) && teamWritable(teamId);
+    }
+
+    // 원장·메시지 계열 공통 강제: 기록자는 본인, 시각은 서버가 찍는다.
+    function actorAndServerTime() {
+      return request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.at == request.time;
+    }
+
+    // ── users ────────────────────────────────────────────────
+    // 팀 화면이 상대 닉네임을 읽어야 하므로 로그인 사용자에게 read 허용.
+    // 쓰기는 본인 문서만.
+    match /users/{uid} {
+      allow get, list: if signedIn();
+      allow create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    // ── invites ──────────────────────────────────────────────
+    // S4: 토큰을 아는 사람만 get. list 로 토큰을 열거할 수 없고, delete 경로가 없다.
+    match /invites/{token} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.teamId is string
+        && request.resource.data.createdBy == request.auth.uid
+        && activeMember(request.resource.data.teamId);
+      allow update, delete: if false;
+    }
+
+    // ── teams ────────────────────────────────────────────────
+    match /teams/{teamId} {
+
+      // 합류 전용 절 (S3)
+      // ① 변경된 최상위 키가 members 하나뿐
+      // ② members 키 집합의 변화가 「본인 uid 추가」 하나뿐
+      // ③ 본인이 들고 온 invite 토큰이 실재하고 이 팀을 가리킬 것
+      function joinsWithInvite() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
+          && !(request.auth.uid in resource.data.members)
+          && request.auth.uid in request.resource.data.members
+          && request.resource.data.members.keys().hasOnly(
+               resource.data.members.keys().concat([request.auth.uid]))
+          && resource.data.members.keys().hasOnly(request.resource.data.members.keys())
+          && request.resource.data.members[request.auth.uid].inviteToken is string
+          && exists(/databases/$(database)/documents/invites/$(request.resource.data.members[request.auth.uid].inviteToken))
+          && get(/databases/$(database)/documents/invites/$(request.resource.data.members[request.auth.uid].inviteToken)).data.teamId == teamId;
+      }
+
+      // 팀장 전용 절 (S5)
+      // 리더 전용 필드 집합 밖의 키는 건드릴 수 없고,
+      // members 는 「키 집합 불변」 — 임의 uid 추가·타인 강제 탈퇴 금지 (S3).
+      function leaderOnlyWrite() {
+        return request.auth.uid == resource.data.leaderUid
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['members', 'archived', 'deleted', 'startAt', 'dueAt', 'leaderUid'])
+          && request.resource.data.members.keys().hasOnly(resource.data.members.keys())
+          && resource.data.members.keys().hasOnly(request.resource.data.members.keys());
+      }
+
+      // 팀장 승인 절 (S6)
+      // 팀장 공석일 때만, 본인 앞으로 온 요청이 approved 인 경우 leaderUid 를 본인으로.
+      function leaderApproval() {
+        return resource.data.leaderUid == null
+          && request.auth.uid in resource.data.members
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['leaderUid'])
+          && request.resource.data.leaderUid == request.auth.uid
+          && exists(/databases/$(database)/documents/teams/$(teamId)/leaderRequests/$(request.auth.uid))
+          && get(/databases/$(database)/documents/teams/$(teamId)/leaderRequests/$(request.auth.uid)).data.status == 'approved'
+          && get(/databases/$(database)/documents/teams/$(teamId)/leaderRequests/$(request.auth.uid)).data.targetUid == request.auth.uid;
+      }
+
+      allow get: if member(teamId);
+      // S2: 전역 팀 목록 열거 금지. 내 팀 목록은 users/{uid}.teams 로 찾는다.
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.resource.data.members.keys().hasOnly([request.auth.uid])
+        && request.auth.uid in request.resource.data.members
+        && request.resource.data.leaderUid == request.auth.uid
+        && request.resource.data.archived == false
+        && request.resource.data.deleted == false;
+
+      allow update: if signedIn()
+        && resource.data.deleted != true
+        && (
+          joinsWithInvite()
+          || (resource.data.archived != true && (leaderOnlyWrite() || leaderApproval()))
+          // 보관 팀은 팀장이 보관 해제(archived)·삭제(deleted)만 할 수 있다.
+          || (resource.data.archived == true
+              && request.auth.uid == resource.data.leaderUid
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['archived', 'deleted']))
+        );
+
+      allow delete: if false;
+
+      // ── 활동 원장 (S7) ───────────────────────────────────
+      match /events/{eventId} {
+        allow get, list: if member(teamId);
+        allow create: if activeMember(teamId) && actorAndServerTime();
+        allow update, delete: if false;   // append-only
+      }
+
+      // ── 팀장 지정·승인 (S6) ──────────────────────────────
+      match /leaderRequests/{targetUid} {
+        allow get, list: if member(teamId);
+        allow create: if activeMember(teamId)
+          && request.resource.data.requesterUid == request.auth.uid
+          && request.resource.data.targetUid == targetUid
+          && targetUid in teamDoc(teamId).members
+          && request.resource.data.status == 'pending'
+          && request.resource.data.at == request.time;
+        // 대상자 본인의 승인, 또는 팀장의 무효화만.
+        allow update: if activeMember(teamId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          && (
+            (request.auth.uid == targetUid
+              && resource.data.status == 'pending'
+              && request.resource.data.status == 'approved')
+            || (request.auth.uid == teamDoc(teamId).leaderUid
+              && request.resource.data.status == 'void')
+          );
+        allow delete: if false;
+      }
+
+      // ── 할 일 ────────────────────────────────────────────
+      match /tasks/{taskId} {
+        allow get, list: if member(teamId);
+        allow create: if activeMember(teamId)
+          && request.resource.data.actorUid == request.auth.uid;
+        allow update: if activeMember(teamId);
+        allow delete: if false;
+      }
+
+      // ── 회의록 ───────────────────────────────────────────
+      match /meetings/{meetingId} {
+        allow get, list: if member(teamId);
+        allow create: if activeMember(teamId)
+          && request.resource.data.actorUid == request.auth.uid;
+        allow update: if activeMember(teamId);
+        allow delete: if false;
+      }
+
+      // ── 대화 (S8 create-only) ────────────────────────────
+      match /messages/{messageId} {
+        allow get, list: if member(teamId);
+        allow create: if activeMember(teamId) && actorAndServerTime();
+        allow update, delete: if false;
+      }
+
+      // ── 문서: 헤더는 update 가능, 버전은 create-only ────────
+      match /docs/{docId} {
+        allow get, list: if member(teamId);
+        allow create: if activeMember(teamId);
+        allow update: if activeMember(teamId);
+        allow delete: if false;
+
+        match /versions/{versionId} {
+          allow get, list: if member(teamId);
+          allow create: if activeMember(teamId) && actorAndServerTime();
+          allow update, delete: if false;
+        }
+      }
+
+      // ── 자료: 개별 삭제 없음 ──────────────────────────────
+      match /files/{fileId} {
+        allow get, list: if member(teamId);
+        allow create: if activeMember(teamId)
+          && request.resource.data.actorUid == request.auth.uid;
+        allow update, delete: if false;
+
+        // 첨삭 댓글 — create-only, 삭제 경로 없음
+        match /comments/{commentId} {
+          allow get, list: if member(teamId);
+          allow create: if activeMember(teamId) && actorAndServerTime();
+          allow update, delete: if false;
+        }
+      }
+    }
+  }
+}
