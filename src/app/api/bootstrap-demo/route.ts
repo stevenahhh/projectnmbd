@@ -118,8 +118,9 @@ export async function POST(request: Request) {
       const data = userSnap.data() ?? {};
       // 멱등 — 이미 데모 팀이 있는 uid 면 스킵 (같은 uid 재호출 시 문서 수 불변)
       if (data.demoBootstrappedAt) {
-        const existing = Object.keys((data.teams as Record<string, string>) ?? {}).find((t) => t.startsWith('demo-'));
-        return NextResponse.json({ ok: true, skipped: true, teamId: existing ?? null });
+        const teams = Object.keys((data.teams as Record<string, string>) ?? {});
+        const existing = teams.find((t) => t.startsWith('demo-') && !t.includes('archive')) ?? null;
+        return NextResponse.json({ ok: true, skipped: true, teamId: existing });
       }
     }
 
