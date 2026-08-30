@@ -38,8 +38,8 @@ export default function OnboardingPage() {
       await saveProfile({
         nickname: nickname.trim(),
         skillTags,
-        github: github.trim() || undefined,
-        portfolio: portfolio.trim() || undefined,
+        ...(github.trim() ? { github: github.trim() } : {}),
+        ...(portfolio.trim() ? { portfolio: portfolio.trim() } : {}),
         interests: interests.split(',').map((s) => s.trim()).filter(Boolean),
         onboardedAt: new Date(),
       } as never);

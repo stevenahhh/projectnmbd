@@ -50,9 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const auth = getFirebaseAuth();
       const uid = auth.currentUser?.uid;
       if (!uid) throw new Error('로그인 상태가 아닙니다');
+      // 웹 SDK setDoc 도 undefined 필드를 거부한다 — 선택 입력은 값이 있을 때만 실는다
+      const data = Object.fromEntries(Object.entries(partial).filter(([, v]) => v !== undefined));
       await setDoc(
         doc(getDb(), 'users', uid),
-        { ...partial, createdAt: serverTimestamp() },
+        { ...data, createdAt: serverTimestamp() },
         { merge: true },
       );
       await refreshProfile();
