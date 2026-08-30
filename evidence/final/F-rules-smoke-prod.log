@@ -1,0 +1,7 @@
+# 규칙 스모크테스트 — prod (projectnmbd) 2026-08-30 (태스크 16)
+규칙 배포: firebase deploy --only firestore:rules → "released rules to cloud.firestore"
+
+① 본인 users 문서 쓰기(규칙 경유, 익명 uid)   → 200 (허용)
+② 비멤버가 타인의 팀 읽기                      → 403 PERMISSION_DENIED (S2 통과)
+③ 미인증 팀 읽기                               → 403 PERMISSION_DENIED (S1 통과)
+④ 비멤버 invites list                          → 403 PERMISSION_DENIED (S4 통과)
