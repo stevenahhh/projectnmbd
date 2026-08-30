@@ -35,9 +35,9 @@ export function LogsPanel({ team, events }: LogsPanelProps) {
 
   const filtered = useMemo(() => {
     const prefixes = CATEGORIES.find((c) => c.key === category)?.prefixes ?? [];
-    return [...events]
-      .filter((event) => (actor === 'all' ? true : event.actorUid === actor))
-      .filter((event) => (prefixes.length === 0 ? true : prefixes.includes(event.type.split('.')[0])))
+    return events
+      .filter((event) => actor === 'all' || event.actorUid === actor)
+      .filter((event) => prefixes.length === 0 || prefixes.includes(event.type.split('.')[0]))
       .sort((a, b) => (b.at?.toDate().getTime() ?? 0) - (a.at?.toDate().getTime() ?? 0));
   }, [events, category, actor]);
 

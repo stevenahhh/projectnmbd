@@ -77,7 +77,9 @@ export function Markdown({ text, className }: { text: string; className?: string
     <div className={className ? `flex flex-col gap-3 ${className}` : 'flex flex-col gap-3'}>
       {blocks.map((block, index) => {
         if (block.kind === 'heading') {
-          const size = block.level === 1 ? 'text-base' : block.level === 2 ? 'text-[15px]' : 'text-sm';
+          let size = 'text-sm';
+          if (block.level === 1) size = 'text-base';
+          else if (block.level === 2) size = 'text-[15px]';
           return (
             <h4 key={index} className={`${size} mt-1 font-semibold`}>
               {inline(block.text)}

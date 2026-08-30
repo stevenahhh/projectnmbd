@@ -32,6 +32,12 @@ function donutSlice(startAngle: number, endAngle: number): string {
   ].join(' ');
 }
 
+function labelAnchor(x: number): 'start' | 'middle' | 'end' {
+  if (x < CENTER - 6) return 'end';
+  if (x > CENTER + 6) return 'start';
+  return 'middle';
+}
+
 interface Slice {
   member: MemberContribution;
   start: number;
@@ -83,7 +89,7 @@ export function ContributionPie({ team, members }: ContributionPieProps) {
           const mid = (start + end) / 2;
           const [lx, ly] = polar(R_OUTER + 18, mid);
           const [tx, ty] = polar((R_OUTER + R_INNER) / 2, mid);
-          const anchor = lx < CENTER - 6 ? 'end' : lx > CENTER + 6 ? 'start' : 'middle';
+          const anchor = labelAnchor(lx);
           const wide = end - start >= 26;
           return (
             <g

@@ -20,6 +20,9 @@ export function summaryLinesOf(summary3: string): string[] {
 const AI_SURFACE =
   'rounded-lg bg-gradient-to-br from-violet-500/8 via-sky-500/6 to-emerald-500/8 ring-1 ring-violet-500/15';
 
+const SUMMARY_FAILED = '요약하지 못했어요 — 직접 적어주세요';
+const SUMMARY_PLACEHOLDERS = ['무엇을 정했나요?', '무엇이 문제였나요?', '다음에 무엇을 하나요?'];
+
 function AiLabel({ className }: { className?: string }) {
   return (
     <span className={`flex items-center gap-1.5 text-xs font-medium ${className ?? ''}`}>
@@ -73,13 +76,13 @@ export function SummaryComposer({ title, body, lines, onChange }: SummaryCompose
       });
       const data = (await response.json()) as { lines?: string[]; error?: string };
       if (!response.ok || !data.lines) {
-        toast.error(data.error ?? '요약하지 못했어요 — 직접 적어주세요');
+        toast.error(data.error ?? SUMMARY_FAILED);
         return;
       }
       onChange([data.lines[0] ?? '', data.lines[1] ?? '', data.lines[2] ?? '']);
       toast.success('본문에서 세 줄을 뽑았어요');
     } catch {
-      toast.error('요약하지 못했어요 — 직접 적어주세요');
+      toast.error(SUMMARY_FAILED);
     } finally {
       setRunning(false);
     }
@@ -109,7 +112,7 @@ export function SummaryComposer({ title, body, lines, onChange }: SummaryCompose
             className="bg-background/70 h-8"
             value={lines[index] ?? ''}
             onChange={(e) => onChange(lines.map((line, i) => (i === index ? e.target.value : line)))}
-            placeholder={index === 0 ? '무엇을 정했나요?' : index === 1 ? '무엇이 문제였나요?' : '다음에 무엇을 하나요?'}
+            placeholder={SUMMARY_PLACEHOLDERS[index]}
           />
         </div>
       ))}
