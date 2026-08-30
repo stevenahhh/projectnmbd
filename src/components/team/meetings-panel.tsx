@@ -14,6 +14,13 @@ import { checkAttend, createMeeting } from '@/lib/team-ops';
 import { formatKST } from '@/lib/time';
 import type { Meeting, Team } from '@/lib/types';
 
+/** 세 줄 요약은 줄 단위로 저장한다 — 예전 「1) … 2) …」 한 줄 형식도 분해해 받아준다. */
+function summaryLinesOf(summary3: string): string[] {
+  const byLine = summary3.split('\n').map((line) => line.trim()).filter(Boolean);
+  const raw = byLine.length > 1 ? byLine : summary3.split(/\s*\d+[).]\s*/).filter(Boolean);
+  return raw.map((line) => line.replace(/^\s*\d+[).]\s*/, '').trim()).filter(Boolean);
+}
+
 interface MeetingsPanelProps {
   team: Team;
   meetings: Meeting[];
@@ -31,7 +38,7 @@ export function MeetingsPanel({ team, meetings, uid, hasAiKey }: MeetingsPanelPr
   const [place, setPlace] = useState('');
   const [online, setOnline] = useState(false);
   const [attendees, setAttendees] = useState<string[]>([uid]);
-  const [summary3, setSummary3] = useState('');
+  const [summaryLines, setSummaryLines] = useState<string[]>(['', '', '']);
   const [body, setBody] = useState('');
 
   const submit = async () => {
@@ -47,12 +54,12 @@ export function MeetingsPanel({ team, meetings, uid, hasAiKey }: MeetingsPanelPr
         place: place.trim(),
         online,
         attendeeUids: attendees,
-        summary3: summary3.trim(),
+        summary3: summaryLines.map((line) => line.trim()).filter(Boolean).join('\n'),
         body: body.trim(),
       });
       setOpen(false);
       setTitle('');
-      setSummary3('');
+      setSummaryLines(['', '', '']);
       setBody('');
       toast.success('회의록을 저장했어요');
     } catch (error) {
@@ -109,9 +116,23 @@ export function MeetingsPanel({ team, meetings, uid, hasAiKey }: MeetingsPanelPr
                   ))}
                 </div>
               </div>
-              <div className="col-span-2">
-                <Label htmlFor="m-sum">세줄요약</Label>
-                <Textarea id="m-sum" value={summary3} onChange={(e) => setSummary3(e.target.value)} placeholder="1) ... 2) ... 3) ..." />
+              <div className="col-span-2 flex flex-col gap-1.5">
+                <Label htmlFor="m-sum-1">세 줄 요약</Label>
+                {[0, 1, 2].map((index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <span className="text-muted-foreground w-4 text-sm tabular-nums">{index + 1}.</span>
+                    <Input
+                      id={`m-sum-${index + 1}`}
+                      value={summaryLines[index] ?? ''}
+                      onChange={(e) =>
+                        setSummaryLines((prev) => prev.map((line, i) => (i === index ? e.target.value : line)))
+                      }
+                      placeholder={
+                        index === 0 ? '무엇을 정했나요?' : index === 1 ? '무엇이 문제였나요?' : '다음에 무엇을 하나요?'
+                      }
+                    />
+                  </div>
+                ))}
               </div>
               <div className="col-span-2">
                 <Label htmlFor="m-body">내용</Label>
@@ -145,9 +166,14 @@ export function MeetingsPanel({ team, meetings, uid, hasAiKey }: MeetingsPanelPr
             <p className="text-muted-foreground text-xs">
               {formatKST(meeting.startedAt)} · {meeting.durationMin}분
             </p>
-            <p className="text-muted-foreground line-clamp-3 text-sm whitespace-pre-wrap">
-              {meeting.summary3 || '요약이 없습니다'}
-            </p>
+            <ol className="text-muted-foreground flex flex-col gap-0.5 text-sm">
+              {summaryLinesOf(meeting.summary3).slice(0, 3).map((line, index) => (
+                <li key={index} className="line-clamp-2">
+                  {index + 1}. {line}
+                </li>
+              ))}
+              {summaryLinesOf(meeting.summary3).length === 0 ? <li>요약이 없습니다</li> : null}
+            </ol>
             <p className="text-muted-foreground mt-auto pt-1 text-[11px]">
               참석 {meeting.attendeeUids.length}명
               {meeting.attendeeUids.length > 0
@@ -199,9 +225,15 @@ export function MeetingsPanel({ team, meetings, uid, hasAiKey }: MeetingsPanelPr
 
               <section className="flex flex-col gap-1.5">
                 <h3 className="text-sm font-semibold">세 줄 요약</h3>
-                <p className="bg-muted rounded-lg p-4 text-sm leading-relaxed whitespace-pre-wrap">
-                  {reading.summary3 || '요약이 없습니다'}
-                </p>
+                <ol className="bg-muted flex flex-col gap-1.5 rounded-lg p-4 text-sm leading-relaxed">
+                  {summaryLinesOf(reading.summary3).map((line, index) => (
+                    <li key={index} className="flex gap-2">
+                      <span className="text-muted-foreground tabular-nums">{index + 1}.</span>
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                  {summaryLinesOf(reading.summary3).length === 0 ? <li>요약이 없습니다</li> : null}
+                </ol>
               </section>
 
               <section className="flex flex-col gap-1.5">

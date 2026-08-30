@@ -29,6 +29,7 @@ import { FilesPanel } from './files-panel';
 import { GanttPanel } from './gantt-panel';
 import { MembersPanel } from './members-panel';
 import { Tutorial } from './tutorial';
+import { SettingsMenu } from './settings-menu';
 import { TeamSwitcher } from './team-switcher';
 import type { Team, TeamTask } from '@/lib/types';
 
@@ -181,16 +182,13 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
         </div>
         <nav className="mt-4 flex flex-col gap-0.5">{navItems}</nav>
         <div className="mt-auto flex flex-col gap-0.5 border-t pt-3">
-          <Tutorial tab={tab} />
-          <Link
-            href="/teams"
-            className="hover:bg-muted rounded-md px-3 py-2 text-sm"
-          >
+          <Link href="/teams" className="hover:bg-muted rounded-md px-3 py-2 text-sm">
             내 팀
           </Link>
           <Link href="/me" className="hover:bg-muted rounded-md px-3 py-2 text-sm">
             내 기록
           </Link>
+          <SettingsMenu />
         </div>
       </aside>
 
@@ -209,9 +207,6 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
             <Button asChild variant="ghost" className="lg:hidden">
               <Link href="/teams">내 팀</Link>
             </Button>
-            <div className="hidden lg:block">
-              <Tutorial tab={tab} />
-            </div>
           </div>
         </header>
 
@@ -228,6 +223,8 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
             </TabsList>
           </Tabs>
         </div>
+
+        <Tutorial tab={tab} />
 
         <main className="w-full flex-1 p-4 lg:px-8 lg:py-6">
           {tab === 'dashboard' ? <DashboardPanel team={team} events={data.events} tasks={data.tasks as TeamTask[]} /> : null}
