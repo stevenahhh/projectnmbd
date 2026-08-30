@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { aggregateContribution, type AggregatableEvent, type AggregatableTask } from '@/lib/contribution';
+import {
+  DOC_CHARS_PER_SAVE_CAP,
+  aggregateContribution,
+  type AggregatableEvent,
+  type AggregatableTask,
+} from '@/lib/contribution';
 import { DEFAULT_WEIGHTS } from '@/lib/types';
 
 const START = new Date('2026-08-01T00:00:00Z');
@@ -166,5 +171,86 @@ describe('기여도 집계 (A.6)', () => {
     expect(mindy.inactive).toBe(true);
     expect(mindy.inactiveDays).toBeGreaterThanOrEqual(result.inactiveThreshold);
     expect(result.members.find((m) => m.uid === 'u_junho')!.inactive).toBe(false);
+  });
+});
+
+describe('원장 방어 — 이벤트만 찍어서 점수를 만들 수 없다', () => {
+  const aggregate = (events: AggregatableEvent[], tasks: AggregatableTask[] = []) =>
+    aggregateContribution({
+      memberUids: UIDS,
+      events,
+      tasks,
+      weights: DEFAULT_WEIGHTS,
+      startAt: START,
+      dueAt: DUE,
+      now: NOW,
+    });
+  const rawOf = (result: ReturnType<typeof aggregate>, uid: string) => result.members.find((m) => m.uid === uid)!.raw;
+
+  it('실재하지 않는 할 일의 완료는 세지 않는다 — payload.onTime 도 믿지 않는다', () => {
+    const forged = Array.from({ length: 5 }, () =>
+      event('u_mindy', 'task.complete', '2026-08-10T05:00:00Z', { taskId: 'ghost', onTime: true }),
+    );
+    const counts = rawOf(aggregate(forged), 'u_mindy');
+    expect(counts.taskDone).toBe(0);
+    expect(counts.taskOnTime).toBe(0);
+  });
+
+  it('실재하는 할 일의 완료는 세고, 정시 여부는 원장 시각으로 판정한다', () => {
+    const tasks = [task('t1', 'u_mindy', '2026-08-12T00:00:00Z', 'done')];
+    const onTime = rawOf(aggregate([event('u_mindy', 'task.complete', '2026-08-11T05:00:00Z', { taskId: 't1' })], tasks), 'u_mindy');
+    expect(onTime.taskDone).toBe(1);
+    expect(onTime.taskOnTime).toBe(1);
+
+    const late = rawOf(aggregate([event('u_mindy', 'task.complete', '2026-08-13T05:00:00Z', { taskId: 't1', onTime: true })], tasks), 'u_mindy');
+    expect(late.taskOnTime).toBe(0);
+  });
+
+  it('완료율은 1을 넘지 못한다 — 반복 완료로 남의 축을 깎을 수 없다', () => {
+    const tasks = [task('t1', 'u_mindy', '2026-08-12T00:00:00Z', 'done'), task('t2', 'u_junho', '2026-08-12T00:00:00Z', 'done')];
+    const events = [
+      ...Array.from({ length: 5 }, () => event('u_mindy', 'task.complete', '2026-08-11T05:00:00Z', { taskId: 't1' })),
+      event('u_junho', 'task.complete', '2026-08-11T05:00:00Z', { taskId: 't2' }),
+    ];
+    const result = aggregate(events, tasks);
+    const mindy = result.members.find((m) => m.uid === 'u_mindy')!;
+    const junho = result.members.find((m) => m.uid === 'u_junho')!;
+    expect(mindy.axes.task).toBe(1);
+    expect(junho.axes.task).toBe(1);
+    expect(junho.percent).toBeCloseTo(mindy.percent, 5);
+  });
+
+  it('같은 회의 참석은 몇 번을 찍어도 한 번이고, 회의를 안 가리키면 세지 않는다', () => {
+    const repeated = Array.from({ length: 3 }, () =>
+      event('u_mindy', 'meeting.attend', '2026-08-12T06:00:00Z', { meetingId: 'm1' }),
+    );
+    expect(rawOf(aggregate(repeated), 'u_mindy').meetingAttend).toBe(1);
+
+    const two = [
+      event('u_mindy', 'meeting.attend', '2026-08-12T06:00:00Z', { meetingId: 'm1' }),
+      event('u_mindy', 'meeting.attend', '2026-08-13T06:00:00Z', { meetingId: 'm2' }),
+    ];
+    expect(rawOf(aggregate(two), 'u_mindy').meetingAttend).toBe(2);
+
+    expect(rawOf(aggregate([event('u_mindy', 'meeting.attend', '2026-08-12T06:00:00Z', {})]), 'u_mindy').meetingAttend).toBe(0);
+  });
+
+  it('직접 기록은 본인 아닌 확인자가 있을 때만 축에 들어간다', () => {
+    const noVerifier = event('u_mindy', 'note.add', '2026-08-13T05:00:00Z', { text: '발표 준비 3시간' });
+    expect(rawOf(aggregate([noVerifier]), 'u_mindy').noteCount).toBe(0);
+
+    const selfOnly = event('u_mindy', 'note.add', '2026-08-13T05:00:00Z', { verifierUids: ['u_mindy'] });
+    expect(rawOf(aggregate([selfOnly]), 'u_mindy').noteCount).toBe(0);
+
+    const verified = event('u_mindy', 'note.add', '2026-08-13T05:00:00Z', { verifierUids: ['u_junho'] });
+    expect(rawOf(aggregate([verified]), 'u_mindy').noteCount).toBe(1);
+  });
+
+  it('문서 글자 수는 저장 1회당 상한까지만 인정한다', () => {
+    const huge = event('u_mindy', 'doc.edit', '2026-08-10T05:00:00Z', { charsDelta: 999_999 });
+    expect(rawOf(aggregate([huge]), 'u_mindy').docChars).toBe(DOC_CHARS_PER_SAVE_CAP);
+
+    const normal = event('u_mindy', 'doc.edit', '2026-08-10T05:00:00Z', { charsDelta: 1200 });
+    expect(rawOf(aggregate([normal]), 'u_mindy').docChars).toBe(1200);
   });
 });

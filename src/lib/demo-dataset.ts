@@ -93,7 +93,7 @@ export interface DemoDataset {
   docs: { title: string; versions: { body: string; charsDelta: number; actorUid: string; at: Date; version: number }[] }[];
   files: { name: string; contentType: string; sizeBytes: number; actorUid: string; caption: string; uploadedAt: Date }[];
   fileComments: { fileIndex: number; actorUid: string; text: string; at: Date }[];
-  meetings: { title: string; startedAt: Date; durationMin: number; place: string; online: boolean; attendeeUids: string[]; summary3: string; body: string; actorUid: string }[];
+  meetings: { id: string; title: string; startedAt: Date; durationMin: number; place: string; online: boolean; attendeeUids: string[]; summary3: string; body: string; actorUid: string }[];
 }
 
 export function buildDemoDataset(visitorUid: string, bootstrap: Date): DemoDataset {
@@ -147,8 +147,11 @@ export function buildDemoDataset(visitorUid: string, bootstrap: Date): DemoDatas
 
   // 회의 + 참석
   const meetings: DemoDataset['meetings'] = [];
-  DEMO_MEETINGS.forEach((m) => {
+  DEMO_MEETINGS.forEach((m, index) => {
+    // 참석 이벤트가 회의를 가리켜야 집계가 중복을 걸러낸다 — id 를 미리 정해 둔다
+    const meetingId = `meeting-${index + 1}`;
     meetings.push({
+      id: meetingId,
       title: m.title,
       startedAt: at(m.started),
       durationMin: m.durationMin,
@@ -159,9 +162,14 @@ export function buildDemoDataset(visitorUid: string, bootstrap: Date): DemoDatas
       body: m.body,
       actorUid: uidOf(0),
     });
-    events.push({ type: 'meeting.create', actorUid: uidOf(0), payload: { title: m.title }, at: at(m.started) });
+    events.push({ type: 'meeting.create', actorUid: uidOf(0), payload: { meetingId, title: m.title }, at: at(m.started) });
     for (const attendeeIndex of m.attendees) {
-      events.push({ type: 'meeting.attend', actorUid: uidOf(attendeeIndex), payload: { title: m.title }, at: at(m.started) });
+      events.push({
+        type: 'meeting.attend',
+        actorUid: uidOf(attendeeIndex),
+        payload: { meetingId, title: m.title },
+        at: at(m.started),
+      });
     }
   });
 
@@ -187,14 +195,19 @@ export function buildDemoDataset(visitorUid: string, bootstrap: Date): DemoDatas
     events.push({
       type: 'task.create',
       actorUid: uidOf(0),
-      payload: { title: t.title, assigneeUid: uidOf(t.assignee), milestoneId: t.parentKey ?? null },
+      payload: { taskId: task.id, title: t.title, assigneeUid: uidOf(t.assignee), milestoneId: t.parentKey ?? null },
       at: at({ day: Math.min(t.due.day - 1, t.milestoneStartAt?.day ?? t.due.day - 1), hour: 9 }),
     });
     if (t.status === 'done' && t.done) {
       const doneAt = at(t.done);
       // 정시 판정의 진실은 원장 at > task.dueAt 대조다 — payload.onTime 은 참고용
       const onTime = doneAt.getTime() <= dueAt.getTime();
-      events.push({ type: 'task.complete', actorUid: uidOf(t.assignee), payload: { title: t.title, onTime }, at: doneAt });
+      events.push({
+        type: 'task.complete',
+        actorUid: uidOf(t.assignee),
+        payload: { taskId: task.id, title: t.title, onTime },
+        at: doneAt,
+      });
     }
   }
 

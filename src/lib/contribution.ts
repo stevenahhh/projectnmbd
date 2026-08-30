@@ -90,6 +90,16 @@ function stringFrom(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
+function stringsFrom(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
+/**
+ * 저장 1회로 인정하는 글자 수 상한.
+ * charsDelta 는 클라이언트가 계산해 보내는 값이라, 한 번에 축을 포화시키지 못하게 막는다.
+ */
+export const DOC_CHARS_PER_SAVE_CAP = 5000;
+
 export function aggregateContribution(input: ContributionInput): ContributionResult {
   const { memberUids, events, tasks, weights, startAt, dueAt, now } = input;
 
@@ -123,6 +133,8 @@ export function aggregateContribution(input: ContributionInput): ContributionRes
     if (counts) counts.taskAssigned += 1;
   }
   const taskById = new Map(tasks.map((t) => [t.id, t]));
+  // 같은 회의를 두 번 찍어도 한 번이다 — 참석은 건수가 아니라 회의 집합이다.
+  const attended = new Map<string, Set<string>>(memberUids.map((uid) => [uid, new Set<string>()]));
 
   for (const event of events) {
     const counts = raw.get(event.actorUid);
@@ -143,8 +155,8 @@ export function aggregateContribution(input: ContributionInput): ContributionRes
 
     switch (event.type) {
       case 'doc.edit':
-        // 증가분만 합산한다 — 지웠다 다시 쓰는 방식으로 부풀릴 수 없게.
-        counts.docChars += Math.max(numberFrom(event.payload.charsDelta), 0);
+        // 증가분만, 그것도 저장 1회당 상한까지만 — 붙여넣기 한 번으로 축이 포화되지 않게.
+        counts.docChars += Math.min(Math.max(numberFrom(event.payload.charsDelta), 0), DOC_CHARS_PER_SAVE_CAP);
         break;
       case 'file.upload':
         counts.fileCount += 1;
@@ -153,22 +165,23 @@ export function aggregateContribution(input: ContributionInput): ContributionRes
         counts.commentCount += 1;
         break;
       case 'task.complete': {
-        counts.taskDone += 1;
-        // payload.onTime 은 쓰되 신뢰하지 않는다.
+        // 실재하는 할 일에 대한 완료만 센다. payload.onTime 은 클라이언트가 쓴 값이라 쓰지 않는다.
         // 정시 여부는 원장이 찍힌 시각과 마감을 서버 시각끼리 대조해 판정한다.
         const task = taskById.get(stringFrom(event.payload.taskId));
-        if (task && event.at) {
-          if (event.at.getTime() <= task.dueAt.getTime()) counts.taskOnTime += 1;
-        } else if (event.payload.onTime === true) {
-          counts.taskOnTime += 1;
-        }
+        if (!task) break;
+        counts.taskDone += 1;
+        if (event.at && event.at.getTime() <= task.dueAt.getTime()) counts.taskOnTime += 1;
         break;
       }
-      case 'meeting.attend':
-        counts.meetingAttend += 1;
+      case 'meeting.attend': {
+        const meetingId = stringFrom(event.payload.meetingId);
+        if (!meetingId) break;
+        attended.get(event.actorUid)?.add(meetingId);
         break;
+      }
       case 'note.add':
-        counts.noteCount += 1;
+        // 본인 아닌 확인자가 있어야 기록으로 친다 — 자기 서명만으로는 축에 들어가지 않는다.
+        if (stringsFrom(event.payload.verifierUids).some((uid) => uid !== event.actorUid)) counts.noteCount += 1;
         break;
       case 'message.post':
         counts.messageCount += 1;
@@ -181,6 +194,7 @@ export function aggregateContribution(input: ContributionInput): ContributionRes
   for (const uid of memberUids) {
     const counts = raw.get(uid)!;
     counts.activeDays = activeDaySets.get(uid)!.size;
+    counts.meetingAttend = attended.get(uid)!.size;
   }
 
   const axesByUid = new Map<string, Axes>();
@@ -190,7 +204,8 @@ export function aggregateContribution(input: ContributionInput): ContributionRes
       doc: counts.docChars,
       file: counts.fileCount + counts.commentCount,
       // 종합에 들어가는 할 일 축은 완료율이다 (A.6). 정시율은 표시만 한다.
-      task: counts.taskAssigned > 0 ? counts.taskDone / counts.taskAssigned : 0,
+      // 1을 넘길 수 없다 — 넘기면 남의 축까지 그 분모로 깎인다.
+      task: counts.taskAssigned > 0 ? Math.min(counts.taskDone / counts.taskAssigned, 1) : 0,
       meeting: counts.meetingAttend,
       note: counts.noteCount,
     });

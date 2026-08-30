@@ -59,7 +59,7 @@ async function writeDataset(db: import('firebase-admin/firestore').Firestore, da
   for (const e of dataset.events) writer.set(teamRef.collection('events').doc(), e);
   for (const m of dataset.messages) writer.set(teamRef.collection('messages').doc(), m);
   for (const { id, ...task } of dataset.tasks) writer.set(teamRef.collection('tasks').doc(id), task);
-  for (const m of dataset.meetings) writer.set(teamRef.collection('meetings').doc(), m);
+  for (const { id, ...meeting } of dataset.meetings) writer.set(teamRef.collection('meetings').doc(id), meeting);
   await Promise.all(writer.flush());
 
   // 파일 문서를 먼저 만들어 id 확보 → 첨삭 댓글이 그 하위로 들어간다
