@@ -106,7 +106,7 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
 
   return (
     <div className="grid gap-4 md:grid-cols-[240px_1fr]">
-      <Card className="h-fit">
+      <Card id="tut-doc-list" className="h-fit">
         <CardHeader className="flex-row items-center justify-between">
           <CardTitle className="text-base">문서 {docs.length}개</CardTitle>
           <Button size="sm" variant="outline" onClick={() => setCreating((v) => !v)}>
@@ -146,7 +146,7 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">{selected.title}</CardTitle>
-              <Button size="sm" onClick={() => void save()} disabled={Boolean(lockedByOther)}>
+              <Button id="tut-doc-save" size="sm" onClick={() => void save()} disabled={Boolean(lockedByOther)}>
                 <Save /> 저장 (버전 {selected.latestVersion + 1})
               </Button>
             </div>
@@ -155,15 +155,13 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
                 <Lock className="size-3" /> {team.members[selected.lockedBy!]?.nickname ?? '다른 사람'}님이 편집 중이에요
               </p>
             ) : (
-              <p className="text-muted-foreground text-xs">
-                최신 버전 {selected.latestVersion} · 저장하면 이전 버전이 그대로 남습니다
-              </p>
+              <p className="text-muted-foreground text-xs">최신 버전 {selected.latestVersion}</p>
             )}
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={18} disabled={Boolean(lockedByOther)} className="font-mono text-sm" />
 
-            <div className="flex flex-col gap-1.5">
+            <div id="tut-doc-versions" className="flex flex-col gap-1.5">
               <p className="flex items-center gap-1.5 text-sm font-medium">
                 <History className="size-4" /> 이전 버전 {versions.length}개
               </p>

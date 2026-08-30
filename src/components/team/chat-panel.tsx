@@ -43,7 +43,7 @@ export function ChatPanel({ team, messages, uid }: ChatPanelProps) {
         <CardTitle className="text-base">대화</CardTitle>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-3">
-        <ScrollArea className="min-h-0 flex-1 pr-3">
+        <ScrollArea id="tut-chat-list" className="min-h-0 flex-1 pr-3">
           <div className="flex flex-col gap-2.5">
             {messages.map((message) => {
               const mine = message.actorUid === uid;
@@ -70,6 +70,7 @@ export function ChatPanel({ team, messages, uid }: ChatPanelProps) {
         </ScrollArea>
         <div className="flex gap-2">
           <Input
+            id="tut-chat-input"
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {

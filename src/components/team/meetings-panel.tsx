@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { CalendarCheck, ClipboardList, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,7 @@ interface MeetingsPanelProps {
 /** 회의록 (§2.8-3) — 정형 템플릿, 화자 분리·녹음 없음. 참석 체크가 출석 기록이다. */
 export function MeetingsPanel({ team, meetings, uid, hasAiKey }: MeetingsPanelProps) {
   const [open, setOpen] = useState(false);
+  const [reading, setReading] = useState<Meeting | null>(null);
   const [title, setTitle] = useState('');
   const [startedAt, setStartedAt] = useState('');
   const [durationMin, setDurationMin] = useState('60');
@@ -64,7 +65,7 @@ export function MeetingsPanel({ team, meetings, uid, hasAiKey }: MeetingsPanelPr
       <div className="flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button id="tut-meeting-new">
               <Plus /> 회의록 작성
             </Button>
           </DialogTrigger>
@@ -129,46 +130,101 @@ export function MeetingsPanel({ team, meetings, uid, hasAiKey }: MeetingsPanelPr
         </Dialog>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {meetings.map((meeting) => (
-          <Card key={meeting.id}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <ClipboardList className="size-4" /> {meeting.title}
-                </CardTitle>
-                <Button
-                  size="sm"
-                  variant={meeting.attendeeUids.includes(uid) ? 'secondary' : 'outline'}
-                  onClick={() =>
-                    void checkAttend(team.id, uid, meeting).then(() => toast.success('참석으로 기록했어요'))
-                  }
-                >
-                  <CalendarCheck /> {meeting.attendeeUids.includes(uid) ? '참석함' : '참석 체크'}
-                </Button>
-              </div>
-              <p className="text-muted-foreground text-xs">
-                {formatKST(meeting.startedAt)} · {meeting.durationMin}분 · {meeting.online ? '비대면' : meeting.place} · 작성 {team.members[meeting.actorUid]?.nickname ?? '—'}
-              </p>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              <div className="bg-muted rounded-md p-3">
-                <p className="text-sm whitespace-pre-wrap font-medium">세줄요약{'\n'}{meeting.summary3 || '—'}</p>
-              </div>
-              <p className="text-sm whitespace-pre-wrap">{meeting.body || '—'}</p>
-              <div className="text-muted-foreground flex flex-wrap gap-2 text-xs">
-                참석 {meeting.attendeeUids.length}명:
-                {meeting.attendeeUids.map((attendeeUid) => (
-                  <span key={attendeeUid} className="bg-secondary rounded px-1.5 py-0.5">
-                    {team.members[attendeeUid]?.nickname ?? '—'}
-                  </span>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <button
+            key={meeting.id}
+            id={meeting.id === meetings[0]?.id ? 'tut-meeting-card' : undefined}
+            onClick={() => setReading(meeting)}
+            className="bg-card hover:border-primary/50 flex cursor-pointer flex-col gap-2 rounded-xl border p-4 text-left shadow-sm transition-all hover:shadow-md"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="line-clamp-2 text-sm font-semibold">{meeting.title}</span>
+              <Badge variant={meeting.online ? 'secondary' : 'outline'}>{meeting.online ? '비대면' : '대면'}</Badge>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              {formatKST(meeting.startedAt)} · {meeting.durationMin}분
+            </p>
+            <p className="text-muted-foreground line-clamp-3 text-sm whitespace-pre-wrap">
+              {meeting.summary3 || '요약이 없습니다'}
+            </p>
+            <p className="text-muted-foreground mt-auto pt-1 text-[11px]">
+              참석 {meeting.attendeeUids.length}명
+              {meeting.attendeeUids.length > 0
+                ? ` · ${meeting.attendeeUids
+                    .slice(0, 3)
+                    .map((a) => team.members[a]?.nickname ?? '—')
+                    .join(', ')}${meeting.attendeeUids.length > 3 ? ' 외' : ''}`
+                : ''}
+            </p>
+          </button>
         ))}
-        {meetings.length === 0 ? <p className="text-muted-foreground py-8 text-center text-sm">아직 회의록이 없어요</p> : null}
+        {meetings.length === 0 ? (
+          <p className="text-muted-foreground py-8 text-center text-sm md:col-span-2 xl:col-span-3">
+            아직 회의록이 없어요
+          </p>
+        ) : null}
       </div>
+
+      <Dialog open={Boolean(reading)} onOpenChange={(next) => (!next ? setReading(null) : undefined)}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <ClipboardList className="size-5" /> {reading?.title}
+            </DialogTitle>
+          </DialogHeader>
+          {reading ? (
+            <article className="flex flex-col gap-5">
+              <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 rounded-lg border p-4 text-sm">
+                <dt className="text-muted-foreground">일시</dt>
+                <dd>
+                  {formatKST(reading.startedAt)} · {reading.durationMin}분
+                </dd>
+                <dt className="text-muted-foreground">장소</dt>
+                <dd>
+                  {reading.place} {reading.online ? '(비대면)' : ''}
+                </dd>
+                <dt className="text-muted-foreground">작성</dt>
+                <dd>{team.members[reading.actorUid]?.nickname ?? '—'}</dd>
+                <dt className="text-muted-foreground">참석</dt>
+                <dd className="flex flex-wrap gap-1.5">
+                  {reading.attendeeUids.map((attendeeUid) => (
+                    <span key={attendeeUid} className="bg-secondary rounded px-1.5 py-0.5 text-xs">
+                      {team.members[attendeeUid]?.nickname ?? '—'}
+                    </span>
+                  ))}
+                  {reading.attendeeUids.length === 0 ? <span className="text-muted-foreground text-xs">없음</span> : null}
+                </dd>
+              </dl>
+
+              <section className="flex flex-col gap-1.5">
+                <h3 className="text-sm font-semibold">세 줄 요약</h3>
+                <p className="bg-muted rounded-lg p-4 text-sm leading-relaxed whitespace-pre-wrap">
+                  {reading.summary3 || '요약이 없습니다'}
+                </p>
+              </section>
+
+              <section className="flex flex-col gap-1.5">
+                <h3 className="text-sm font-semibold">내용</h3>
+                <p className="text-[15px] leading-7 whitespace-pre-wrap">{reading.body || '내용이 없습니다'}</p>
+              </section>
+
+              <Button
+                variant={reading.attendeeUids.includes(uid) ? 'secondary' : 'default'}
+                className="self-start"
+                onClick={() =>
+                  void checkAttend(team.id, uid, reading).then(() => {
+                    toast.success('참석으로 기록했어요');
+                    setReading(null);
+                  })
+                }
+              >
+                <CalendarCheck /> {reading.attendeeUids.includes(uid) ? '참석함' : '참석 체크'}
+              </Button>
+            </article>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

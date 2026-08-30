@@ -40,10 +40,10 @@ describe('데모 데이터셋 (A.10 개정)', () => {
     }
   });
 
-  it('방문자가 민지(팀장) 자리를 차지하고 유령 uid는 방문자가 아니다', () => {
+  it('방문자가 김민지(팀장) 자리를 차지하고 유령 uid는 방문자가 아니다', () => {
     const ds = buildDemoDataset(VISITOR, BOOTSTRAP);
     expect(ds.team.leaderUid).toBe(VISITOR);
-    expect(ds.team.members[VISITOR].nickname).toBe('민지');
+    expect(ds.team.members[VISITOR].nickname).toBe('김민지');
     expect(Object.keys(ds.team.members).length).toBe(4);
     for (const uid of Object.keys(ds.team.members)) {
       if (uid !== VISITOR) expect(uid.startsWith('demo-')).toBe(true);

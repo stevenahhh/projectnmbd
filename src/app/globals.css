@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import url("https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/complete/WantedSansVariable.min.css");
 
 @custom-variant dark (&:is(.dark *));
 
@@ -87,7 +88,7 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: 'Wanted Sans Variable', 'Wanted Sans', var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
@@ -95,7 +96,19 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Wanted Sans 를 앱 전체에 강제한다 — 폼 요소는 기본 폰트를 상속하지 않아 명시 지정. */
+  html,
+  body,
+  button,
+  input,
+  textarea,
+  select,
+  optgroup {
+    font-family: 'Wanted Sans Variable', 'Wanted Sans', var(--font-geist-sans), system-ui, sans-serif;
+    font-feature-settings: 'ss01', 'ss03';
+  }
   body {
     @apply bg-background text-foreground;
+    letter-spacing: -0.01em;
   }
 }

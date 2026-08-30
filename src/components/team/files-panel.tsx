@@ -90,7 +90,7 @@ export function FilesPanel({ team, files, uid }: FilesPanelProps) {
         <p className="text-muted-foreground text-sm">파일당 10MB · 팀당 200MB · 개별 삭제 없음</p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button id="tut-file-upload">
               <Upload /> 업로드
             </Button>
           </DialogTrigger>
@@ -117,7 +117,7 @@ export function FilesPanel({ team, files, uid }: FilesPanelProps) {
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div id="tut-file-list" className="grid gap-4 md:grid-cols-2">
         {files.map((file) => (
           <Card key={file.id}>
             <CardHeader>

@@ -36,13 +36,13 @@ const TABS = ['dashboard', 'tasks', 'chat', 'meetings', 'docs', 'files', 'gantt'
 export type WorkspaceTab = (typeof TABS)[number];
 
 const TAB_LABELS: Record<WorkspaceTab, string> = {
-  dashboard: '대시보드',
+  dashboard: '홈',
   tasks: '할 일',
   chat: '대화',
   meetings: '회의',
   docs: '문서',
   files: '자료',
-  gantt: '간트',
+  gantt: '타임라인',
   members: '멤버',
 };
 
@@ -92,7 +92,7 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
     seen.current = new Set([...seen.current, ...fresh.map((n) => n.id)]);
     if (notifyGranted) {
       for (const n of fresh.slice(0, 2)) {
-        new Notification('팀플', { body: n.message });
+        new Notification('한몫', { body: n.message });
       }
     }
   }, [notifications, notifyGranted]);
@@ -151,17 +151,14 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
   const navItems = TABS.map((t) => {
     const Icon = TAB_ICONS[t];
     const active = tab === t;
+    // 홈은 가장 자주 쓰는 화면이라 크게 둔다
+    const home = t === 'dashboard';
+    const base = 'flex cursor-pointer items-center rounded-md text-left transition-colors';
+    const size = home ? 'gap-3 px-3 py-3 text-base font-semibold' : 'gap-2.5 px-3 py-2 text-sm';
+    const tone = active ? 'bg-secondary text-secondary-foreground' : 'hover:bg-muted';
     return (
-      <button
-        key={t}
-        onClick={() => setTab(t as WorkspaceTab)}
-        className={
-          active
-            ? 'bg-secondary flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-medium'
-            : 'hover:bg-muted flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm'
-        }
-      >
-        <Icon className="size-4 shrink-0" />
+      <button key={t} onClick={() => setTab(t as WorkspaceTab)} className={`${base} ${size} ${tone}`}>
+        <Icon className={home ? 'size-5 shrink-0' : 'size-4 shrink-0'} />
         {TAB_LABELS[t]}
       </button>
     );
@@ -172,7 +169,7 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
       {/* 사이드바 — 데스크톱 전용 */}
       <aside className="bg-card sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r p-3 lg:flex">
         <Link href="/" className="hover:bg-muted rounded-md px-2 py-1.5 text-lg font-bold tracking-tight">
-          팀플
+          한몫
         </Link>
         <div className="mt-4">
           <TeamSwitcher current={team} />
@@ -184,7 +181,7 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
         </div>
         <nav className="mt-4 flex flex-col gap-0.5">{navItems}</nav>
         <div className="mt-auto flex flex-col gap-0.5 border-t pt-3">
-          <Tutorial />
+          <Tutorial tab={tab} />
           <Link
             href="/teams"
             className="hover:bg-muted rounded-md px-3 py-2 text-sm"
@@ -213,7 +210,7 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
               <Link href="/teams">내 팀</Link>
             </Button>
             <div className="hidden lg:block">
-              <Tutorial />
+              <Tutorial tab={tab} />
             </div>
           </div>
         </header>
@@ -239,7 +236,7 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
           {tab === 'meetings' ? <MeetingsPanel team={team} meetings={data.meetings} uid={uid} hasAiKey={hasAiKey} /> : null}
           {tab === 'docs' ? <DocsPanel team={team} docs={data.docs} uid={uid} /> : null}
           {tab === 'files' ? <FilesPanel team={team} files={data.files} uid={uid} teamSizeBytes={0} /> : null}
-          {tab === 'gantt' ? <GanttPanel team={team} tasks={data.tasks} /> : null}
+          {tab === 'gantt' ? <GanttPanel team={team} tasks={data.tasks} events={data.events} uid={uid} /> : null}
           {tab === 'members' ? <MembersPanel team={team} leaderRequests={data.leaderRequests} uid={uid} /> : null}
         </main>
       </div>

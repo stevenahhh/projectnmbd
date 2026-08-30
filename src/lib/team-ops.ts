@@ -114,6 +114,31 @@ export async function postMessage(teamId: string, uid: string, text: string): Pr
   });
 }
 
+/** 타임라인 항목(마일스톤·할 일)의 제목·기간 수정 — 수정 이력이 이벤트로 남는다. */
+export async function updateMilestone(
+  teamId: string,
+  uid: string,
+  task: TeamTask,
+  input: { title: string; startAt?: Date | null; dueAt: Date },
+): Promise<void> {
+  const db = getDb();
+  const data: Record<string, unknown> = { title: input.title, dueAt: input.dueAt };
+  if (input.startAt) data.milestoneStartAt = input.startAt;
+  await writeEvent(db, {
+    teamId,
+    actorUid: uid,
+    type: 'milestone.update',
+    payload: {
+      taskId: task.id,
+      title: input.title,
+      startAt: input.startAt ? input.startAt.toISOString() : null,
+      dueAt: input.dueAt.toISOString(),
+      prevDueAt: task.dueAt.toDate().toISOString(),
+    },
+    mutations: [{ kind: 'update', ref: doc(db, 'teams', teamId, 'tasks', task.id), data }],
+  });
+}
+
 // ── 회의록 ───────────────────────────────────────────────
 
 export async function createMeeting(

@@ -118,7 +118,7 @@ export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button id="tut-task-add">
               <Plus /> 할 일 추가
             </Button>
           </DialogTrigger>
@@ -170,7 +170,7 @@ export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
         </Dialog>
       </div>
 
-      <Card>
+      <Card id="tut-task-todo">
         <CardHeader>
           <CardTitle className="text-base">진행 중</CardTitle>
         </CardHeader>
@@ -183,7 +183,7 @@ export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
       </Card>
 
       {done.length > 0 ? (
-        <Card>
+        <Card id="tut-task-done">
           <CardHeader>
             <CardTitle className="text-muted-foreground text-base">완료 {done.length}</CardTitle>
           </CardHeader>

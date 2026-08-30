@@ -11,6 +11,13 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/components/providers/auth-provider';
 
+const SELLING_POINTS = [
+  { title: '한 곳에 모으기', desc: '문서·자료·할 일·대화·회의록을 팀 공간 하나에' },
+  { title: '버전 관리', desc: '문서는 저장할 때마다 버전이 남고, 예전 버전도 그대로 열려요' },
+  { title: '자동 기여도', desc: '쓰기만 하면 누가 얼마나 한몫 했는지 자동으로 정리됩니다' },
+  { title: '기여 리포트', desc: '동료평가에 첨부할 한 장을 PNG로 저장할 수 있어요' },
+];
+
 const SKILL_SUGGESTIONS = ['데이터 정리', '모델링', '문서 작성', '발표', '자료조사', '디자인', '개발'];
 
 /**
@@ -18,7 +25,7 @@ const SKILL_SUGGESTIONS = ['데이터 정리', '모델링', '문서 작성', '�
  * 로그인·회원가입 화면은 존재하지 않는다 — 익명 uid + 닉네임만 (G1, C6).
  */
 export default function OnboardingPage() {
-  const { status, uid, profile, saveProfile, triggerBootstrap } = useAuth();
+  const { status, profile, saveProfile, triggerBootstrap } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState(0);
   // 기본 닉네임이 채워져 있어 아무 글자나 쓰지 않아도 바로 시작할 수 있다
@@ -56,9 +63,9 @@ export default function OnboardingPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-6 px-6">
+    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-5 px-6 py-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold">환영합니다 {uid ? '' : ''}</h1>
+        <h1 className="text-lg font-bold">한몫에 오신 걸 환영해요</h1>
         <Button asChild variant="ghost" size="sm"><Link href="/">처음으로</Link></Button>
       </div>
       <Card>
@@ -144,6 +151,15 @@ export default function OnboardingPage() {
           ) : null}
         </CardContent>
       </Card>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        {SELLING_POINTS.map((point) => (
+          <div key={point.title} className="bg-card rounded-lg border p-3">
+            <p className="text-sm font-semibold">{point.title}</p>
+            <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">{point.desc}</p>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }

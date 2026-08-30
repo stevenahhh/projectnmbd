@@ -89,7 +89,7 @@ export function MembersPanel({ team, leaderRequests, uid }: MembersPanelProps) {
         </Card>
       ) : null}
 
-      <Card>
+      <Card id="tut-member-list">
         <CardHeader>
           <CardTitle className="text-base">참여자 {Object.keys(team.members).length}명</CardTitle>
         </CardHeader>
@@ -147,7 +147,7 @@ export function MembersPanel({ team, leaderRequests, uid }: MembersPanelProps) {
       </Card>
 
       {isLeader ? (
-        <Card className="border-destructive/40">
+        <Card id="tut-member-leader" className="border-destructive/40">
           <CardHeader>
             <CardTitle className="text-base">팀 관리 — 팀장 전용</CardTitle>
           </CardHeader>

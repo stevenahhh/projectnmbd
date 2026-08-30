@@ -4,7 +4,7 @@
  * 모든 시각은 부트스트랩 기준 상대 시각 { day, hour, minute } 로 정의한다.
  * day < 0 과거, day > 0 미래. 절대 시각 환산은 buildDemoDataset(bootstrap) 이 유일하게 수행한다.
  *
- * 방문자 uid 는 민지(팀장) 자리를 차지한다 — 심사위원이 방문만으로
+ * 방문자 uid 는 김민지(팀장) 자리를 차지한다 — 심사위원이 방문만으로
  * 자기 전용 1개월치 팀플 기록을 받는다. 데모 팀에는 초대 링크를 만들지 않는다.
  *
  * Spark 쓰기 한도 방어: 1회 부트스트랩당 쓰기 약 250~350건.
@@ -33,10 +33,10 @@ export interface DemoMemberDef {
 }
 
 export const DEMO_MEMBERS: DemoMemberDef[] = [
-  { nickname: '민지', roleLabel: '팀장 · 데이터', placeholderUid: 'demo-minji', studentId: DEMO_STUDENT_IDS[0] },
-  { nickname: '준호', roleLabel: '모델링', placeholderUid: 'demo-junho', studentId: DEMO_STUDENT_IDS[1] },
-  { nickname: '서연', roleLabel: '문서 · 발표', placeholderUid: 'demo-seoyeon', studentId: DEMO_STUDENT_IDS[2] },
-  { nickname: '태윤', roleLabel: '평가 · 실험', placeholderUid: 'demo-taeyun', studentId: DEMO_STUDENT_IDS[3] },
+  { nickname: '김민지', roleLabel: '팀장 · 데이터', placeholderUid: 'demo-minji', studentId: DEMO_STUDENT_IDS[0] },
+  { nickname: '박준호', roleLabel: '모델링', placeholderUid: 'demo-junho', studentId: DEMO_STUDENT_IDS[1] },
+  { nickname: '이서연', roleLabel: '문서 · 발표', placeholderUid: 'demo-seoyeon', studentId: DEMO_STUDENT_IDS[2] },
+  { nickname: '최태윤', roleLabel: '평가 · 실험', placeholderUid: 'demo-taeyun', studentId: DEMO_STUDENT_IDS[3] },
 ];
 
 export interface RelativeStamp {
@@ -81,7 +81,7 @@ export const DEMO_CHAT: DemoChatLine[] = [
   { day: -4, hour: 11, speaker: 1, text: '혼잡도 지도 시각화 png 새로 만들었어요' },
   { day: -3, hour: 9, speaker: 0, text: '결과 분석 마일스톤 시작! ablation 실험 누가 할래요?' },
   { day: -3, hour: 9, speaker: 1, text: '저 할게요. 이번 주 과제가 세 개라 좀 밀려요' },
-  { day: -2, hour: 20, speaker: 3, text: '안녕하세요, 태윤이에요. 늦어서 미안해요. 이제 합류했어요' },
+  { day: -2, hour: 20, speaker: 3, text: '안녕하세요, 최태윤이에요. 늦어서 미안해요. 이제 합류했어요' },
   { day: -2, hour: 20, speaker: 0, text: '오 안녕하세요! 평가·실험 파트 부탁드려요' },
   { day: -2, hour: 21, speaker: 1, text: '피처 하나씩 빼보면서 MAE 변화 보면 돼요. 노트북 공유해요' },
   { day: -2, hour: 21, speaker: 3, text: '받았습니다. 내일 아침에 결과 올릴게요' },
@@ -354,9 +354,9 @@ export function buildDemoDataset(visitorUid: string, bootstrap: Date): DemoDatas
   });
 
   const archivedMembers: Record<string, { nickname: string; roleLabel: string; joinedAt: Date; studentId?: string }> = {
-    [uidOf(0)]: { nickname: '민지', roleLabel: '팀장', joinedAt: at({ day: -200, hour: 9 }), studentId: DEMO_STUDENT_IDS[0] },
-    [uidOf(1)]: { nickname: '준호', roleLabel: '모델링', joinedAt: at({ day: -200, hour: 9 }), studentId: DEMO_STUDENT_IDS[1] },
-    [uidOf(2)]: { nickname: '서연', roleLabel: '발표', joinedAt: at({ day: -200, hour: 9 }), studentId: DEMO_STUDENT_IDS[2] },
+    [uidOf(0)]: { nickname: '김민지', roleLabel: '팀장', joinedAt: at({ day: -200, hour: 9 }), studentId: DEMO_STUDENT_IDS[0] },
+    [uidOf(1)]: { nickname: '박준호', roleLabel: '모델링', joinedAt: at({ day: -200, hour: 9 }), studentId: DEMO_STUDENT_IDS[1] },
+    [uidOf(2)]: { nickname: '이서연', roleLabel: '발표', joinedAt: at({ day: -200, hour: 9 }), studentId: DEMO_STUDENT_IDS[2] },
   };
 
   const events: DemoDataset['events'] = [];
