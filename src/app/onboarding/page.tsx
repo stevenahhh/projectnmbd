@@ -11,14 +11,6 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Wordmark } from '@/components/wordmark';
-import { PhraseRoller } from '@/components/phrase-roller';
-
-const SELLING_POINTS = [
-  { title: '한 곳에 모으기', desc: '문서·자료·할 일·대화·회의록을 팀 공간 하나에' },
-  { title: '버전 관리', desc: '문서는 저장할 때마다 버전이 남고, 예전 버전도 그대로 열려요' },
-  { title: '자동 기여도', desc: '쓰기만 하면 누가 얼마나 했는지 자동으로 정리됩니다' },
-  { title: '기여 리포트', desc: '동료평가에 첨부할 한 장을 PNG로 저장할 수 있어요' },
-];
 
 const SKILL_SUGGESTIONS = ['데이터 정리', '모델링', '문서 작성', '발표', '자료조사', '디자인', '개발'];
 
@@ -66,14 +58,11 @@ export default function OnboardingPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-5 px-6 py-10">
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <h1>
-            <Wordmark className="text-3xl" />
-          </h1>
-          <Button asChild variant="ghost" size="sm"><Link href="/">처음으로</Link></Button>
-        </div>
-        <PhraseRoller />
+      <div className="flex items-center justify-between">
+        <h1>
+          <Wordmark className="text-3xl" />
+        </h1>
+        <Button asChild variant="ghost" size="sm"><Link href="/">처음으로</Link></Button>
       </div>
       <Card>
         <CardHeader>
@@ -159,14 +148,6 @@ export default function OnboardingPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-2 sm:grid-cols-2">
-        {SELLING_POINTS.map((point) => (
-          <div key={point.title} className="bg-card rounded-lg border p-3">
-            <p className="text-sm font-semibold">{point.title}</p>
-            <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">{point.desc}</p>
-          </div>
-        ))}
-      </div>
     </main>
   );
 }

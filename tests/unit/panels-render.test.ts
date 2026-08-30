@@ -173,9 +173,11 @@ describe('캐치프레이즈 굴림', () => {
   it('모든 문구를 한 칸에 겹쳐 두고 하나만 보인다', () => {
     const html = renderToStaticMarkup(createElement(PhraseRoller, {}));
     // 겹쳐 둔 칸이 가장 긴 문구로 너비를 잡아야 뒷말이 흔들리지 않는다
-    const stacked = html.match(/col-start-1 row-start-1/g) ?? [];
+    const stacked = html.match(/grid-area:1 \/ 1/g) ?? [];
     expect(stacked.length).toBeGreaterThan(1);
-    expect((html.match(/opacity-100/g) ?? [])).toHaveLength(1);
+    // 위치는 인라인 transform 이어야 한다 — Tailwind translate 유틸은 transition 이 보간하지 못한다
+    expect(html).toContain('transform:translateY(0%)');
+    expect((html.match(/opacity:1;/g) ?? [])).toHaveLength(1);
     // 강조는 정확히 한 줄에만
     expect((html.match(/phrase-shine/g) ?? [])).toHaveLength(1);
   });

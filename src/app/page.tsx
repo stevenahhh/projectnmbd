@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Wordmark } from '@/components/wordmark';
+import { PhraseRoller } from '@/components/phrase-roller';
 
 export default function Landing() {
   return (
@@ -9,11 +10,7 @@ export default function Landing() {
         <h1 className="text-5xl">
           <Wordmark />
         </h1>
-        <p className="text-muted-foreground text-lg">
-          팀플에서 내 몫이 그대로 남습니다 — 문서·자료·할 일·대화를 모으면,
-          <br />
-          기여도는 자동으로 정리됩니다.
-        </p>
+        <PhraseRoller className="justify-center text-lg" />
       </div>
       <div className="flex flex-col items-center gap-3">
         <Button asChild size="lg" className="text-base">
