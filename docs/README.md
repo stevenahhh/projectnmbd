@@ -11,4 +11,8 @@
 
 **4안이 「Dibs」로 구현·배포되었습니다** — 서비스 <https://projectnmbd.vercel.app>, 개요는 루트 [README](../README.md).
 
+### 발표 자료
+
+대회 제출용 10장(16:9 PDF + 장별 PNG + 슬라이드 원본) — [`decks/dibs/`](./decks/dibs/)
+
 1안 실행 플랜은 `.omo/plans/ctrlf-school-1an.md`에 보존됩니다. **08-29 사용자 결정으로 4안 방향 채택**(1인 1작품이므로 택1). 2·3안은 대안 보고서입니다.

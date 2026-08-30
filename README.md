@@ -74,5 +74,7 @@ Vercel(Hobby) + Firebase. `bunx vercel --prod` 로 배포하고, 보안 규칙�
 ## 문서
 
 - [`docs/`](./docs) — 기획 보고서 4안 비교 (Dibs 는 4안 「팀플 원장」의 구현체)
+- [`docs/decks/dibs`](./docs/decks/dibs) — 제출용 발표 자료 10장
+  (PDF `dibs-deck.pdf` · 슬라이드 원본 `slide-01~10.html` · 장별 PNG `out-png/`)
 - [`devlog/DEVELOPMENT_LOG.md`](./devlog/DEVELOPMENT_LOG.md) — 실패와 결정의 기록
 - [`evidence/`](./evidence) — 규칙 스모크·테스트 로그 등 검증 산출물

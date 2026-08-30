@@ -1,0 +1,430 @@
+{
+  "schemaVersion": 2,
+  "verdict": "proceed",
+  "generatedAt": "2026-08-30T14:46:40.764Z",
+  "slideMode": "presentation",
+  "resolution": "2160p",
+  "previewDir": ".slides-grab/gate-preview",
+  "reportPath": ".slides-grab/design-gate-report.md",
+  "passA": {
+    "reportPath": "/Users/gahn/Projects/99-aibootcamp-vibecoding/decks/dibs/gate-a.md",
+    "summary": "# Pass A System Contract / Constraint Integrity",
+    "verdict": "PASS",
+    "unresolvedCritical": 0,
+    "blockingFindings": [],
+    "checks": [
+      {
+        "name": "System consistency",
+        "status": "pass"
+      },
+      {
+        "name": "Color discipline",
+        "status": "pass"
+      },
+      {
+        "name": "AI slop tropes",
+        "status": "pass"
+      },
+      {
+        "name": "Content discipline",
+        "status": "pass"
+      }
+    ],
+    "evidenceFiles": [
+      "slide-01.png",
+      "slide-02.png",
+      "slide-03.png",
+      "slide-04.png",
+      "slide-05.png",
+      "slide-06.png",
+      "slide-07.png",
+      "slide-08.png",
+      "slide-09.png",
+      "slide-10.png"
+    ],
+    "slideFingerprints": [
+      {
+        "file": "slide-01.html",
+        "sha256": "e6854a88fc48c4464505ec548ec72e2a93664c1326e6507ef14bae6ae0e10389"
+      },
+      {
+        "file": "slide-02.html",
+        "sha256": "552652e7eb9aa95dc9ce5860a57698b638b0ee94c76a7277ec00de46abdcfa94"
+      },
+      {
+        "file": "slide-03.html",
+        "sha256": "0ebaa46f0c889707f7219632006ece56c18690057afe3e2a87139586ac80c78f"
+      },
+      {
+        "file": "slide-04.html",
+        "sha256": "aaf8067a49445c28e717e2e10729f743269101c130878fdd73087d93ff589255"
+      },
+      {
+        "file": "slide-05.html",
+        "sha256": "146eec9259398d41fa9f8d0915224beb51b0f6fb54b1b1f023800abeef9e70ac"
+      },
+      {
+        "file": "slide-06.html",
+        "sha256": "7d183971502b34a0a73514e919e1edfe3407030c68952fd814fe65416c196efa"
+      },
+      {
+        "file": "slide-07.html",
+        "sha256": "0759e9ffc8b3a69cbac40f6821e2c3ccbd5327e4c3b8e20cd2c6f58905e4e89d"
+      },
+      {
+        "file": "slide-08.html",
+        "sha256": "20cc72bc5146f8187824a41c2bd0df56c7ccb136f225cd42f0a77cf0749dd861"
+      },
+      {
+        "file": "slide-09.html",
+        "sha256": "4b66eb5af673d82ff4faddae1878a9616c000ac2fd6b859777661e90fea9e0d5"
+      },
+      {
+        "file": "slide-10.html",
+        "sha256": "76577ce898ff31022566928ce9b984c38bcba88570a346e85aa9cc4348e4bc46"
+      }
+    ]
+  },
+  "passB": {
+    "reportPath": "/Users/gahn/Projects/99-aibootcamp-vibecoding/decks/dibs/gate-b.md",
+    "summary": "# Pass B Audience Impact / Expressive Readability",
+    "verdict": "PASS",
+    "unresolvedCritical": 0,
+    "blockingFindings": [],
+    "checks": [
+      {
+        "name": "Composition & hierarchy",
+        "status": "pass"
+      },
+      {
+        "name": "Typography & legibility",
+        "status": "pass"
+      },
+      {
+        "name": "Korean/CJK word-break integrity",
+        "status": "pass"
+      },
+      {
+        "name": "Review Litmus",
+        "status": "pass"
+      }
+    ],
+    "evidenceFiles": [
+      "slide-01.png",
+      "slide-02.png",
+      "slide-03.png",
+      "slide-04.png",
+      "slide-05.png",
+      "slide-06.png",
+      "slide-07.png",
+      "slide-08.png",
+      "slide-09.png",
+      "slide-10.png"
+    ],
+    "slideFingerprints": [
+      {
+        "file": "slide-01.html",
+        "sha256": "e6854a88fc48c4464505ec548ec72e2a93664c1326e6507ef14bae6ae0e10389"
+      },
+      {
+        "file": "slide-02.html",
+        "sha256": "552652e7eb9aa95dc9ce5860a57698b638b0ee94c76a7277ec00de46abdcfa94"
+      },
+      {
+        "file": "slide-03.html",
+        "sha256": "0ebaa46f0c889707f7219632006ece56c18690057afe3e2a87139586ac80c78f"
+      },
+      {
+        "file": "slide-04.html",
+        "sha256": "aaf8067a49445c28e717e2e10729f743269101c130878fdd73087d93ff589255"
+      },
+      {
+        "file": "slide-05.html",
+        "sha256": "146eec9259398d41fa9f8d0915224beb51b0f6fb54b1b1f023800abeef9e70ac"
+      },
+      {
+        "file": "slide-06.html",
+        "sha256": "7d183971502b34a0a73514e919e1edfe3407030c68952fd814fe65416c196efa"
+      },
+      {
+        "file": "slide-07.html",
+        "sha256": "0759e9ffc8b3a69cbac40f6821e2c3ccbd5327e4c3b8e20cd2c6f58905e4e89d"
+      },
+      {
+        "file": "slide-08.html",
+        "sha256": "20cc72bc5146f8187824a41c2bd0df56c7ccb136f225cd42f0a77cf0749dd861"
+      },
+      {
+        "file": "slide-09.html",
+        "sha256": "4b66eb5af673d82ff4faddae1878a9616c000ac2fd6b859777661e90fea9e0d5"
+      },
+      {
+        "file": "slide-10.html",
+        "sha256": "76577ce898ff31022566928ce9b984c38bcba88570a346e85aa9cc4348e4bc46"
+      }
+    ]
+  },
+  "gateValidation": {
+    "status": "passed",
+    "failures": [],
+    "passA": {
+      "label": "Pass A",
+      "verdict": "PASS",
+      "confidence": "High",
+      "unresolvedCritical": 0,
+      "blockingFindings": [],
+      "checks": [
+        {
+          "name": "System consistency",
+          "status": "pass"
+        },
+        {
+          "name": "Color discipline",
+          "status": "pass"
+        },
+        {
+          "name": "AI slop tropes",
+          "status": "pass"
+        },
+        {
+          "name": "Content discipline",
+          "status": "pass"
+        }
+      ],
+      "evidenceFiles": [
+        "slide-01.png",
+        "slide-02.png",
+        "slide-03.png",
+        "slide-04.png",
+        "slide-05.png",
+        "slide-06.png",
+        "slide-07.png",
+        "slide-08.png",
+        "slide-09.png",
+        "slide-10.png"
+      ],
+      "slideFingerprints": [
+        {
+          "file": "slide-01.html",
+          "sha256": "e6854a88fc48c4464505ec548ec72e2a93664c1326e6507ef14bae6ae0e10389"
+        },
+        {
+          "file": "slide-02.html",
+          "sha256": "552652e7eb9aa95dc9ce5860a57698b638b0ee94c76a7277ec00de46abdcfa94"
+        },
+        {
+          "file": "slide-03.html",
+          "sha256": "0ebaa46f0c889707f7219632006ece56c18690057afe3e2a87139586ac80c78f"
+        },
+        {
+          "file": "slide-04.html",
+          "sha256": "aaf8067a49445c28e717e2e10729f743269101c130878fdd73087d93ff589255"
+        },
+        {
+          "file": "slide-05.html",
+          "sha256": "146eec9259398d41fa9f8d0915224beb51b0f6fb54b1b1f023800abeef9e70ac"
+        },
+        {
+          "file": "slide-06.html",
+          "sha256": "7d183971502b34a0a73514e919e1edfe3407030c68952fd814fe65416c196efa"
+        },
+        {
+          "file": "slide-07.html",
+          "sha256": "0759e9ffc8b3a69cbac40f6821e2c3ccbd5327e4c3b8e20cd2c6f58905e4e89d"
+        },
+        {
+          "file": "slide-08.html",
+          "sha256": "20cc72bc5146f8187824a41c2bd0df56c7ccb136f225cd42f0a77cf0749dd861"
+        },
+        {
+          "file": "slide-09.html",
+          "sha256": "4b66eb5af673d82ff4faddae1878a9616c000ac2fd6b859777661e90fea9e0d5"
+        },
+        {
+          "file": "slide-10.html",
+          "sha256": "76577ce898ff31022566928ce9b984c38bcba88570a346e85aa9cc4348e4bc46"
+        }
+      ]
+    },
+    "passB": {
+      "label": "Pass B",
+      "verdict": "PASS",
+      "confidence": "High",
+      "unresolvedCritical": 0,
+      "blockingFindings": [],
+      "checks": [
+        {
+          "name": "Composition & hierarchy",
+          "status": "pass"
+        },
+        {
+          "name": "Typography & legibility",
+          "status": "pass"
+        },
+        {
+          "name": "Korean/CJK word-break integrity",
+          "status": "pass"
+        },
+        {
+          "name": "Review Litmus",
+          "status": "pass"
+        }
+      ],
+      "evidenceFiles": [
+        "slide-01.png",
+        "slide-02.png",
+        "slide-03.png",
+        "slide-04.png",
+        "slide-05.png",
+        "slide-06.png",
+        "slide-07.png",
+        "slide-08.png",
+        "slide-09.png",
+        "slide-10.png"
+      ],
+      "slideFingerprints": [
+        {
+          "file": "slide-01.html",
+          "sha256": "e6854a88fc48c4464505ec548ec72e2a93664c1326e6507ef14bae6ae0e10389"
+        },
+        {
+          "file": "slide-02.html",
+          "sha256": "552652e7eb9aa95dc9ce5860a57698b638b0ee94c76a7277ec00de46abdcfa94"
+        },
+        {
+          "file": "slide-03.html",
+          "sha256": "0ebaa46f0c889707f7219632006ece56c18690057afe3e2a87139586ac80c78f"
+        },
+        {
+          "file": "slide-04.html",
+          "sha256": "aaf8067a49445c28e717e2e10729f743269101c130878fdd73087d93ff589255"
+        },
+        {
+          "file": "slide-05.html",
+          "sha256": "146eec9259398d41fa9f8d0915224beb51b0f6fb54b1b1f023800abeef9e70ac"
+        },
+        {
+          "file": "slide-06.html",
+          "sha256": "7d183971502b34a0a73514e919e1edfe3407030c68952fd814fe65416c196efa"
+        },
+        {
+          "file": "slide-07.html",
+          "sha256": "0759e9ffc8b3a69cbac40f6821e2c3ccbd5327e4c3b8e20cd2c6f58905e4e89d"
+        },
+        {
+          "file": "slide-08.html",
+          "sha256": "20cc72bc5146f8187824a41c2bd0df56c7ccb136f225cd42f0a77cf0749dd861"
+        },
+        {
+          "file": "slide-09.html",
+          "sha256": "4b66eb5af673d82ff4faddae1878a9616c000ac2fd6b859777661e90fea9e0d5"
+        },
+        {
+          "file": "slide-10.html",
+          "sha256": "76577ce898ff31022566928ce9b984c38bcba88570a346e85aa9cc4348e4bc46"
+        }
+      ]
+    }
+  },
+  "slideFingerprints": [
+    {
+      "file": "slide-01.html",
+      "sha256": "e6854a88fc48c4464505ec548ec72e2a93664c1326e6507ef14bae6ae0e10389"
+    },
+    {
+      "file": "slide-02.html",
+      "sha256": "552652e7eb9aa95dc9ce5860a57698b638b0ee94c76a7277ec00de46abdcfa94"
+    },
+    {
+      "file": "slide-03.html",
+      "sha256": "0ebaa46f0c889707f7219632006ece56c18690057afe3e2a87139586ac80c78f"
+    },
+    {
+      "file": "slide-04.html",
+      "sha256": "aaf8067a49445c28e717e2e10729f743269101c130878fdd73087d93ff589255"
+    },
+    {
+      "file": "slide-05.html",
+      "sha256": "146eec9259398d41fa9f8d0915224beb51b0f6fb54b1b1f023800abeef9e70ac"
+    },
+    {
+      "file": "slide-06.html",
+      "sha256": "7d183971502b34a0a73514e919e1edfe3407030c68952fd814fe65416c196efa"
+    },
+    {
+      "file": "slide-07.html",
+      "sha256": "0759e9ffc8b3a69cbac40f6821e2c3ccbd5327e4c3b8e20cd2c6f58905e4e89d"
+    },
+    {
+      "file": "slide-08.html",
+      "sha256": "20cc72bc5146f8187824a41c2bd0df56c7ccb136f225cd42f0a77cf0749dd861"
+    },
+    {
+      "file": "slide-09.html",
+      "sha256": "4b66eb5af673d82ff4faddae1878a9616c000ac2fd6b859777661e90fea9e0d5"
+    },
+    {
+      "file": "slide-10.html",
+      "sha256": "76577ce898ff31022566928ce9b984c38bcba88570a346e85aa9cc4348e4bc46"
+    }
+  ],
+  "localAssetFingerprints": [],
+  "passReportFingerprints": [
+    {
+      "file": "gate-a.md",
+      "sha256": "9ba725cd179794a4f8fb5faf02498b469765a60c87845a67a9bc5d70f9260e31"
+    },
+    {
+      "file": "gate-b.md",
+      "sha256": "4e96f12fd79c01d98dafed555552bb4d15da7532b3f70579106d5af4780e8334"
+    }
+  ],
+  "previewFingerprints": [
+    {
+      "file": ".slides-grab/gate-preview/slide-01.png",
+      "sha256": "1df92c7067654a7e18cc5c1b1a71ad42b1b8b4207f1dc400fce00d8c18e36e1d"
+    },
+    {
+      "file": ".slides-grab/gate-preview/slide-02.png",
+      "sha256": "a2e84b568715a97aefabef36ca4416c3229529a86945bcb71c81ae8b8e6253ca"
+    },
+    {
+      "file": ".slides-grab/gate-preview/slide-03.png",
+      "sha256": "947a5200989fcd9a4b1e2e104b937e0cb6aae612f1b229923cae23c9965bd395"
+    },
+    {
+      "file": ".slides-grab/gate-preview/slide-04.png",
+      "sha256": "3a020cacac68b0fa84743cae454b1a0642bf5483f06df25f16650d973566dd1b"
+    },
+    {
+      "file": ".slides-grab/gate-preview/slide-05.png",
+      "sha256": "276365f006574d108f53585efd546680093d4c46eebef1702efd3e67db0abee7"
+    },
+    {
+      "file": ".slides-grab/gate-preview/slide-06.png",
+      "sha256": "881a8cecdf3e770c72beabe74bada2e5ed16490240c08ce8395ffde5062609ad"
+    },
+    {
+      "file": ".slides-grab/gate-preview/slide-07.png",
+      "sha256": "8c75a06588492451263f41fe97a856a936cab8d35914259990ae138a364829aa"
+    },
+    {
+      "file": ".slides-grab/gate-preview/slide-08.png",
+      "sha256": "78c6dbd6cf3711e9d046447ca18e1b47e5e209c8d5d0375e0cd54081e2435d59"
+    },
+    {
+      "file": ".slides-grab/gate-preview/slide-09.png",
+      "sha256": "7f948cf3d4b6fc189c8f62d5b7256a9fbef5b29793c22a4a5c7a9785343ad198"
+    },
+    {
+      "file": ".slides-grab/gate-preview/slide-10.png",
+      "sha256": "f9c6dd2875f27a5cde6a10214e259ac81a14ed57d7dd53c54061056d87d82d6c"
+    }
+  ],
+  "templateFidelity": {
+    "status": "not-applicable",
+    "slides": [],
+    "findings": [],
+    "referencePreviewFingerprints": []
+  }
+}
