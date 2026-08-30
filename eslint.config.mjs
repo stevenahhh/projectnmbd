@@ -17,6 +17,10 @@ const eslintConfig = defineConfig([
     "deck/**",
     "devlog/**",
   ]),
+  {
+    // 브라우저 기본 대화상자는 탭을 멈추고 모양을 못 바꾼다 — toast 나 ConfirmDialog 를 쓴다
+    rules: { "no-alert": "error" },
+  },
 ]);
 
 export default eslintConfig;

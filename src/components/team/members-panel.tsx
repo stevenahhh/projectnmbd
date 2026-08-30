@@ -5,6 +5,7 @@ import { Archive, Crown, Link2, ShieldQuestion, Trash2, UserCheck } from 'lucide
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -25,6 +26,7 @@ export function MembersPanel({ team, leaderRequests, uid }: MembersPanelProps) {
   const { refreshProfile } = useAuth();
   const [roleDrafts, setRoleDrafts] = useState<Record<string, string>>({});
   const [inviteUrl, setInviteUrl] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
   const isLeader = team.leaderUid === uid;
   const leaderless = team.leaderUid === null;
@@ -200,19 +202,26 @@ export function MembersPanel({ team, leaderRequests, uid }: MembersPanelProps) {
             >
               <Archive /> 팀 보관
             </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (confirm('이 팀을 삭제할까요? 되돌릴 수 없습니다.')) {
-                  void softDeleteTeam(team.id, uid).then(() => {
-                    toast.success('팀을 삭제했어요');
-                    void refreshProfile();
-                  });
-                }
-              }}
-            >
+            <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
               <Trash2 /> 팀 삭제
             </Button>
+            <ConfirmDialog
+              open={deleteOpen}
+              onOpenChange={setDeleteOpen}
+              title="이 팀을 삭제할까요?"
+              description="되돌릴 수 없습니다. 팀원 누구도 다시 열 수 없게 됩니다."
+              confirmLabel="삭제"
+              destructive
+              onConfirm={async () => {
+                try {
+                  await softDeleteTeam(team.id, uid);
+                  toast.success('팀을 삭제했어요');
+                  await refreshProfile();
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : '삭제하지 못했어요');
+                }
+              }}
+            />
             <p className="text-muted-foreground w-full text-xs">
               팀 전체는 삭제할 수 있지만, 팀 안의 특정 기록만 골라 지우거나 날짜를 고칠 수는 없습니다.
             </p>

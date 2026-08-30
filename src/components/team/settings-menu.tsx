@@ -6,6 +6,7 @@ import { ChevronDown, RotateCcw, Settings } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { getFirebaseAuth } from '@/lib/firebase/client';
 import { clearTutorialProgress } from './tutorial';
 
@@ -14,9 +15,9 @@ export function SettingsMenu() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const resetEverything = async () => {
-    if (!confirm('이 브라우저의 계정과 데이터를 버리고 처음부터 다시 시작할까요?')) return;
     setResetting(true);
     try {
       clearTutorialProgress();
@@ -45,9 +46,18 @@ export function SettingsMenu() {
       {open ? (
         <div className="mt-1 ml-3 flex flex-col gap-2 border-l pl-3">
           <p className="text-muted-foreground text-xs">디버그</p>
-          <Button size="sm" variant="outline" onClick={() => void resetEverything()} disabled={resetting}>
+          <Button size="sm" variant="outline" onClick={() => setConfirmOpen(true)} disabled={resetting}>
             <RotateCcw /> {resetting ? '초기화 중…' : '데이터 지우고 새로 시작'}
           </Button>
+          <ConfirmDialog
+            open={confirmOpen}
+            onOpenChange={setConfirmOpen}
+            title="처음부터 다시 시작할까요?"
+            description="이 브라우저의 익명 계정을 버리고 새 계정으로 시작합니다. 지금 팀에는 다시 들어올 수 없어요."
+            confirmLabel="새로 시작"
+            destructive
+            onConfirm={resetEverything}
+          />
           <Button
             size="sm"
             variant="ghost"
