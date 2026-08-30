@@ -7,12 +7,8 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  aggregateContribution,
-  describeEvent,
-  type AggregatableEvent,
-  type AggregatableTask,
-} from '@/lib/contribution';
+import { aggregateContribution, type AggregatableEvent, type AggregatableTask } from '@/lib/contribution';
+import { describeEvent } from '@/lib/event-text';
 import { formatKST } from '@/lib/time';
 import type { LedgerEvent, Team, TeamTask } from '@/lib/types';
 import { ActivityHeatmap } from './activity-heatmap';

@@ -74,6 +74,21 @@ export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
     }
   };
 
+  // 실패를 삼키지 않는다 — 권한·네트워크 오류가 조용히 사라지면 눌렀는지조차 알 수 없다.
+  const toggle = async (task: TeamTask, completed: boolean) => {
+    try {
+      if (completed) {
+        await reopenTask(team.id, uid, task.id);
+        toast.success('다시 진행 중으로 되돌렸어요');
+      } else {
+        await completeTask(team.id, uid, task);
+        toast.success('완료로 표시했어요');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '바꾸지 못했어요');
+    }
+  };
+
   const row = (task: TeamTask) => {
     const assigneeName = team.members[task.assigneeUid]?.nickname ?? '담당 없음';
     const completed = task.status === 'done';
@@ -82,13 +97,7 @@ export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
         <button
           className="mt-0.5 cursor-pointer"
           aria-label={completed ? '완료 취소' : '완료로 표시'}
-          onClick={() => {
-            if (completed) {
-              void reopenTask(team.id, uid, task.id).then(() => toast.success('다시 진행 중으로 되돌렸어요'));
-            } else {
-              void completeTask(team.id, uid, task).then(() => toast.success('완료로 표시했어요'));
-            }
-          }}
+          onClick={() => void toggle(task, completed)}
         >
           {completed ? <CheckCircle2 className="text-primary size-5" /> : <Circle className="text-muted-foreground size-5" />}
         </button>
