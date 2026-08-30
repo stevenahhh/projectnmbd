@@ -3,28 +3,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTimelineDrag, type BarRow } from '@/hooks/use-timeline-drag';
+import { useTimelineDrag } from '@/hooks/use-timeline-drag';
+import { useTimelineLayout } from '@/hooks/use-timeline-layout';
 import { useTimelineView } from '@/hooks/use-timeline-view';
 import { updateMilestone } from '@/lib/team-ops';
 import { toDate } from '@/lib/time';
 import {
-  AXIS_HEIGHT,
+  CHART_LEFT,
+  CHART_WIDTH,
   DAY_MS,
-  MARKER_ROW_HEIGHT,
-  ROW_PITCH,
   VIEW_WIDTH,
-  generateTicks,
-  groupByDay,
-  niceStep,
-  packMarkers,
   snapStepFor,
   snapToHalfHour,
   toLocalInputValue,
   type Bubble,
 } from '@/lib/timeline';
-import { layoutTree } from '@/lib/timeline-tree';
 import type { LedgerEvent, Team, TeamTask } from '@/lib/types';
-import { TimelineAxis, markerLabelWidth, type DeadlineGroup } from './timeline-axis';
+import { TimelineAxis } from './timeline-axis';
 import { TimelineChart } from './timeline-chart';
 import { TimelineEditDialog, TimelineHistoryDialog, type TimelineForm } from './timeline-dialogs';
 import { TimelineToolbar } from './timeline-toolbar';
@@ -51,6 +46,8 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
   const [saving, setSaving] = useState(false);
   const [pan, setPan] = useState<{ pointerX: number; startMs: number; endMs: number } | null>(null);
   const [bubble, setBubble] = useState<Bubble | null>(null);
+  // 완료된 마감까지 다 찍으면 축이 점으로 뒤덮인다 — 기본은 남은 것만 본다
+  const [showDone, setShowDone] = useState(false);
 
   const bounds = useMemo(() => {
     const starts = tasks.map((task) => toDate(task.milestoneStartAt)?.getTime() ?? Infinity);
@@ -63,37 +60,15 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
 
   const { view, setView, zoomBy, pxToMs, reset, focus } = useTimelineView(bounds, svgRef);
   const rangeMs = Math.max(1, view.endMs - view.startMs);
-  const x = useCallback((ms: number) => ((ms - view.startMs) / rangeMs) * VIEW_WIDTH, [view.startMs, rangeMs]);
-
-  const rows: BarRow[] = useMemo(() => {
-    const bars = tasks.filter((task) => task.milestoneStartAt);
-    const barIds = new Set(bars.map((task) => task.id));
-    return layoutTree(
-      bars.map((task) => ({
-        id: task.id,
-        parentId: task.milestoneId && barIds.has(task.milestoneId) ? task.milestoneId : null,
-        order: task.order,
-        task,
-      })),
-    );
-  }, [tasks]);
-
-  const ticks = useMemo(
-    () => generateTicks(view.startMs, view.endMs, niceStep(rangeMs, VIEW_WIDTH, 78)),
-    [view.startMs, view.endMs, rangeMs],
+  const x = useCallback(
+    (ms: number) => CHART_LEFT + ((ms - view.startMs) / rangeMs) * CHART_WIDTH,
+    [view.startMs, rangeMs],
   );
-
-  const { markers, markerRows } = useMemo(() => {
-    const groups = groupByDay(
-      tasks.filter((task) => !task.milestoneStartAt).map((task) => ({ ms: task.dueAt.toDate().getTime(), item: task })),
-    ).filter((group) => group.ms >= view.startMs - DAY_MS && group.ms <= view.endMs + DAY_MS);
-    const packed = packMarkers<DeadlineGroup>(
-      groups.map((group) => ({ ms: group.ms, item: group, labelWidth: markerLabelWidth(group.items.length) })),
-      (ms) => ((ms - view.startMs) / rangeMs) * VIEW_WIDTH,
-      VIEW_WIDTH,
-    );
-    return { markers: packed.markers, markerRows: Math.max(1, packed.rows) };
-  }, [tasks, view.startMs, rangeMs, view.endMs]);
+  const { rows, ticks, dayLines, markers, markerRows, showMarkerLabel, chartTop, height } = useTimelineLayout(
+    tasks,
+    view,
+    showDone,
+  );
 
   const history = useMemo(
     () =>
@@ -103,9 +78,6 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
     [events],
   );
 
-  const chartTop = AXIS_HEIGHT + markerRows * MARKER_ROW_HEIGHT;
-  const height = chartTop + Math.max(1, rows.length) * ROW_PITCH + 16;
-
   const { drag, beginDrag } = useTimelineDrag({
     team,
     uid,
@@ -113,7 +85,7 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
     rows,
     view,
     pxToMs,
-    snapStep: snapStepFor(rangeMs, VIEW_WIDTH),
+    snapStep: snapStepFor(rangeMs, CHART_WIDTH),
     chartTop,
     height,
     svgRef,
@@ -174,6 +146,8 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
         <CardTitle className="text-base">타임라인</CardTitle>
         <TimelineToolbar
           historyCount={history.length}
+          showDone={showDone}
+          onToggleDone={() => setShowDone((value) => !value)}
           onZoomIn={() => zoomBy(1 / 1.6)}
           onZoomOut={() => zoomBy(1.6)}
           onReset={reset}
@@ -183,10 +157,6 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
       </CardHeader>
 
       <CardContent className="overflow-x-auto">
-        <p className="text-muted-foreground mb-2 text-xs">
-          막대를 끌면 기간이 옮겨지고, 양 끝을 끌면 눈금 단위로 조절됩니다. 위아래로 끌어 다른 막대에 놓으면 그 하위
-          항목이 되고, 빈 곳에 놓으면 최상위로 빠집니다. 배경을 끌면 좌우로, ⌘/Ctrl+휠은 확대·축소입니다.
-        </p>
         <svg
           id="tut-timeline-chart"
           ref={svgRef}
@@ -195,6 +165,12 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
           role="img"
           aria-label="타임라인"
         >
+          <defs>
+            <clipPath id="timeline-chart-clip">
+              <rect x={CHART_LEFT} y={0} width={CHART_WIDTH} height={height} />
+            </clipPath>
+          </defs>
+
           <rect
             x={0}
             y={0}
@@ -205,19 +181,26 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
             onPointerDown={(event) => setPan({ pointerX: event.clientX, startMs: view.startMs, endMs: view.endMs })}
           />
 
-          <TimelineAxis
-            ticks={ticks}
+          <line x1={CHART_LEFT} y1={0} x2={CHART_LEFT} y2={height} stroke="currentColor" className="text-border" />
+
+          <g clipPath="url(#timeline-chart-clip)">
+            <TimelineAxis
+              ticks={ticks}
+            dayLines={dayLines}
             markers={markers}
             markerRows={markerRows}
+            showMarkerLabel={showMarkerLabel}
             height={height}
             nowMs={nowMs}
             x={x}
-            inView={(ms) => ms >= view.startMs && ms <= view.endMs}
-            onBubble={setBubble}
-          />
+              inView={(ms) => ms >= view.startMs && ms <= view.endMs}
+              onBubble={setBubble}
+            />
+          </g>
 
           <TimelineChart
             rows={rows.map((row) => ({ ...row, item: row.item.task }))}
+            clipId="timeline-chart-clip"
             chartTop={chartTop}
             height={height}
             archived={Boolean(team.archived)}

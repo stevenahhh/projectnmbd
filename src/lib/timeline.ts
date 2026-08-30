@@ -13,13 +13,43 @@ export const DAY_MS = 24 * HOUR_MS;
 export const SNAP_MS = 30 * MINUTE_MS;
 
 export const VIEW_WIDTH = 960;
-export const AXIS_HEIGHT = 46;
+/** 왼쪽 이름 거터 — 막대 안에 제목을 넣으면 짧은 막대가 자기 이름을 자른다. */
+export const GUTTER_WIDTH = 160;
+export const CHART_LEFT = GUTTER_WIDTH;
+export const CHART_WIDTH = VIEW_WIDTH - GUTTER_WIDTH;
+export const AXIS_HEIGHT = 40;
 export const MARKER_ROW_HEIGHT = 18;
-export const BAR_HEIGHT = 26;
-export const ROW_GAP = 12;
+export const BAR_HEIGHT = 22;
+export const ROW_GAP = 10;
 export const ROW_PITCH = BAR_HEIGHT + ROW_GAP;
 export const HANDLE_PX = 10;
-export const INDENT_PX = 14;
+export const INDENT_PX = 16;
+
+/** 거터에 들어갈 제목의 최대 폭. 넘치면 말줄임한다. */
+export function gutterTextWidth(depth: number): number {
+  return GUTTER_WIDTH - 16 - depth * INDENT_PX;
+}
+
+/** 11px 기준 대략적인 글자 폭 — 한글은 넓고 라틴·숫자는 좁다. */
+export function estimateTextPx(text: string): number {
+  return [...text].reduce((sum, ch) => sum + (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(ch) ? 11 : 6), 0);
+}
+
+/** 거터 폭에 맞게 잘라 말줄임한다. */
+export function truncateToWidth(text: string, maxPx: number): string {
+  if (estimateTextPx(text) <= maxPx) return text;
+  const chars = [...text];
+  const budget = maxPx - estimateTextPx('…');
+  const kept: string[] = [];
+  let used = 0;
+  for (const ch of chars) {
+    const next = used + estimateTextPx(ch);
+    if (next > budget) break;
+    kept.push(ch);
+    used = next;
+  }
+  return `${kept.join('')}…`;
+}
 
 export const TIMELINE_COLORS = {
   todo: '#4b5bd6',
@@ -116,7 +146,7 @@ export interface Tick {
   major: boolean;
 }
 
-function startOfDayMs(ms: number): number {
+export function startOfDayMs(ms: number): number {
   const date = new Date(ms);
   date.setHours(0, 0, 0, 0);
   return date.getTime();
@@ -134,6 +164,15 @@ function tickLabel(ms: number, stepMs: number): { label: string; major: boolean 
   return firstOfMonth
     ? { label: `${date.getMonth() + 1}월`, major: true }
     : { label: `${date.getMonth() + 1}/${date.getDate()}`, major: false };
+}
+
+/** 라벨 없는 하루 경계선 — 너무 촘촘해지면 그리지 않는다. */
+export function dayBoundaries(startMs: number, endMs: number, widthPx: number, minGapPx = 8): number[] {
+  const range = Math.max(1, endMs - startMs);
+  if ((DAY_MS / range) * widthPx < minGapPx) return [];
+  const days: number[] = [];
+  for (let ms = startOfDayMs(startMs) + DAY_MS; ms <= endMs; ms += DAY_MS) days.push(ms);
+  return days;
 }
 
 /** 눈금은 자정 기준으로 정렬한다 — 시계에 없는 자리에 선이 서지 않게. */
@@ -189,59 +228,4 @@ export function dragRange(
     return { startMs: Math.min(snapTo(baseStart + deltaMs, step), baseEnd - step), endMs: baseEnd };
   }
   return { startMs: baseStart, endMs: Math.max(snapTo(baseEnd + deltaMs, step), baseStart + step) };
-}
-
-/** 같은 날 마감을 하나로 묶는다. 오래된 날짜가 앞이다. */
-export function groupByDay<T>(entries: { ms: number; item: T }[]): { ms: number; items: T[] }[] {
-  const groups = new Map<number, { ms: number; items: T[] }>();
-  for (const entry of entries) {
-    const key = startOfDayMs(entry.ms);
-    const bucket = groups.get(key);
-    if (bucket) bucket.items.push(entry.item);
-    else groups.set(key, { ms: entry.ms, items: [entry.item] });
-  }
-  return [...groups.values()].sort((a, b) => a.ms - b.ms);
-}
-
-export interface PackedMarker<T> {
-  item: T;
-  ms: number;
-  x: number;
-  row: number;
-  /** 오른쪽 끝에 붙어 라벨을 왼쪽으로 뒤집은 경우. */
-  flip: boolean;
-}
-
-export const MARKER_RADIUS = 6;
-
-/**
- * 점 + 라벨이 차지할 가상의 박스를 만들고, 앞선 박스와 겹치면 한 줄 아래로 내린다.
- * 첫 줄부터 차례로 들어갈 자리를 찾는 first-fit — 왼쪽 점이 늘 위에 남는다.
- */
-export function packMarkers<T>(
-  entries: { ms: number; item: T; labelWidth: number }[],
-  xOf: (ms: number) => number,
-  viewWidth: number,
-  gapPx = 6,
-): { markers: PackedMarker<T>[]; rows: number } {
-  const rowRight: number[] = [];
-  const markers: PackedMarker<T>[] = [];
-
-  for (const entry of [...entries].sort((a, b) => a.ms - b.ms)) {
-    const x = xOf(entry.ms);
-    const flip = x + MARKER_RADIUS + entry.labelWidth > viewWidth;
-    const left = flip ? x - MARKER_RADIUS - entry.labelWidth : x - MARKER_RADIUS;
-    const right = flip ? x + MARKER_RADIUS : x + MARKER_RADIUS + entry.labelWidth;
-
-    let row = rowRight.findIndex((edge) => edge + gapPx <= left);
-    if (row === -1) {
-      row = rowRight.length;
-      rowRight.push(right);
-    } else {
-      rowRight[row] = Math.max(rowRight[row], right);
-    }
-    markers.push({ item: entry.item, ms: entry.ms, x, row, flip });
-  }
-
-  return { markers, rows: rowRight.length };
 }

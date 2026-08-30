@@ -1,18 +1,26 @@
 import { describe, expect, it } from 'vitest';
+import {
+  deadlineBucketMs,
+  groupByDay,
+  groupDeadlines,
+  markerLabelShown,
+  packMarkers,
+} from '@/lib/timeline-markers';
 import { canReparent, layoutTree } from '@/lib/timeline-tree';
 import {
   DAY_MS,
   HOUR_MS,
   SNAP_MS,
   dragRange,
+  estimateTextPx,
   generateTicks,
-  groupByDay,
+  gutterTextWidth,
   niceStep,
-  packMarkers,
   snapStepFor,
   snapToHalfHour,
   stamp,
   toLocalInputValue,
+  truncateToWidth,
   zoomRange,
 } from '@/lib/timeline';
 
@@ -91,34 +99,102 @@ describe('타임라인 좌표·시간 계산', () => {
   });
 
   describe('마감 점 배치', () => {
-    const entry = (ms: number, item: string, labelWidth = 20) => ({ ms, item, labelWidth });
+    const group = (ms: number, count = 1) => ({ ms, items: Array.from({ length: count }, (_, i) => `${ms}-${i}`) });
+    const identity = (ms: number) => ms;
 
     it('박스가 겹치면 한 줄 아래로 내린다', () => {
-      const packed = packMarkers([entry(10, 'a'), entry(16, 'b')], (ms) => ms, 100);
+      const packed = packMarkers([group(10), group(16)], identity, 100, { maxRows: 2 });
       expect(packed.markers.map((marker) => marker.row)).toEqual([0, 1]);
       expect(packed.rows).toBe(2);
     });
 
     it('충분히 떨어져 있으면 같은 줄에 남는다', () => {
-      const packed = packMarkers([entry(10, 'a'), entry(60, 'b')], (ms) => ms, 100);
+      const packed = packMarkers([group(10), group(60)], identity, 100, { maxRows: 2 });
       expect(packed.markers.map((marker) => marker.row)).toEqual([0, 0]);
       expect(packed.rows).toBe(1);
     });
 
     it('오른쪽 끝에서는 라벨을 왼쪽으로 뒤집는다', () => {
-      const packed = packMarkers([entry(95, 'a')], (ms) => ms, 100);
-      expect(packed.markers[0].flip).toBe(true);
+      expect(packMarkers([group(95)], identity, 100).markers[0].flip).toBe(true);
     });
 
-    it('같은 날 마감은 하나로 묶고 오래된 날짜가 앞에 온다', () => {
-      const groups = groupByDay([
+    it('라벨을 끄면 박스가 점 크기로 줄어 한 줄에 들어간다', () => {
+      const crowded = Array.from({ length: 18 }, (_, i) => group(20 + i * 25));
+      expect(packMarkers(crowded, identity, 960, { showLabel: true }).rows).toBeGreaterThan(1);
+      expect(packMarkers(crowded, identity, 960, { showLabel: false }).rows).toBe(1);
+    });
+
+    it('줄 상한을 넘으면 왼쪽 점에 합치고 개수는 잃지 않는다', () => {
+      const dense = Array.from({ length: 30 }, (_, i) => group(10 + i * 20, 2));
+      const packed = packMarkers(dense, identity, 300, { maxRows: 2 });
+      expect(packed.rows).toBeLessThanOrEqual(2);
+      expect(packed.markers.reduce((sum, marker) => sum + marker.items.length, 0)).toBe(60);
+      expect(packed.markers.some((marker) => marker.merged)).toBe(true);
+    });
+  });
+
+  describe('마감 묶기', () => {
+    it('버킷을 하루로 두면 날짜별 묶기와 같다', () => {
+      const entries = [
         { ms: at('2026-08-31T23:00:00'), item: 'b' },
         { ms: at('2026-08-30T09:00:00'), item: 'a' },
         { ms: at('2026-08-31T09:00:00'), item: 'c' },
+      ];
+      expect(groupDeadlines(entries, DAY_MS)).toEqual(groupByDay(entries));
+    });
+
+    it('같은 날 마감은 하나로 묶고 점은 가장 늦은 마감을 가리킨다', () => {
+      const groups = groupByDay([
+        { ms: at('2026-08-31T09:00:00'), item: 'c' },
+        { ms: at('2026-08-31T23:00:00'), item: 'b' },
+        { ms: at('2026-08-30T09:00:00'), item: 'a' },
       ]);
       expect(groups).toHaveLength(2);
       expect(groups[0].items).toEqual(['a']);
-      expect(groups[1].items).toEqual(['b', 'c']);
+      expect(groups[1].items).toEqual(['c', 'b']);
+      expect(groups[1].ms).toBe(at('2026-08-31T23:00:00'));
+    });
+
+    it('버킷을 넓히면 여러 날이 한 점으로 묶인다', () => {
+      const week = groupDeadlines(
+        [
+          { ms: at('2026-08-30T09:00:00'), item: 'a' },
+          { ms: at('2026-09-01T09:00:00'), item: 'b' },
+          { ms: at('2026-09-20T09:00:00'), item: 'c' },
+        ],
+        7 * DAY_MS,
+      );
+      expect(week.length).toBeLessThan(3);
+      expect(week.reduce((sum, group) => sum + group.items.length, 0)).toBe(3);
+    });
+
+    it('버킷은 하루보다 좁아지지 않고, 축소할수록 넓어진다', () => {
+      expect(deadlineBucketMs(2 * DAY_MS, 800)).toBe(DAY_MS);
+      expect(deadlineBucketMs(400 * DAY_MS, 800)).toBeGreaterThan(DAY_MS);
+    });
+
+    it('버킷 폭이 라벨을 담을 만할 때만 라벨을 띄운다', () => {
+      // 39일을 800px 에 담으면 하루가 20px — 라벨이 못 들어간다
+      expect(markerLabelShown(39 * DAY_MS, DAY_MS, 800)).toBe(false);
+      expect(markerLabelShown(5 * DAY_MS, DAY_MS, 800)).toBe(true);
+    });
+  });
+
+  describe('거터 제목', () => {
+    it('한글은 넓게, 라틴·숫자는 좁게 센다', () => {
+      expect(estimateTextPx('가나')).toBe(22);
+      expect(estimateTextPx('ab12')).toBe(24);
+    });
+
+    it('폭을 넘으면 말줄임하고, 들어가면 그대로 둔다', () => {
+      expect(truncateToWidth('데이터 수집', 200)).toBe('데이터 수집');
+      const cut = truncateToWidth('아주 긴 마일스톤 제목입니다', 40);
+      expect(cut.endsWith('…')).toBe(true);
+      expect(estimateTextPx(cut)).toBeLessThanOrEqual(40);
+    });
+
+    it('깊이가 깊을수록 제목에 쓸 폭이 줄어든다', () => {
+      expect(gutterTextWidth(1)).toBeLessThan(gutterTextWidth(0));
     });
   });
 

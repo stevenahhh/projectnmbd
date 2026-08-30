@@ -77,7 +77,14 @@ const TUTORIALS: Record<string, Step[]> = {
       element: '#tut-timeline-zoom',
       popover: { title: '확대와 이동', description: '배경을 끌면 좌우로 움직이고, ⌘/Ctrl+휠로 확대·축소할 수 있어요' },
     },
-    { element: '#tut-timeline-legend', popover: { title: '색으로 읽기', description: '위쪽 축의 점이 마감입니다. 점에 올리면 무엇이 걸려 있는지 보여요' } },
+    {
+      element: '#tut-timeline-legend',
+      popover: {
+        title: '색으로 읽기',
+        description:
+          '위쪽 축의 점이 마감입니다. 점에 올리면 무엇이 걸려 있는지 보여요. 끝난 마감은 기본으로 숨기고, 「완료 포함」으로 다시 켤 수 있어요',
+      },
+    },
     { element: '#tut-timeline-history', popover: { title: '수정 이력', description: '누가 언제 기간을 바꿨는지 전부 남습니다' } },
   ],
   logs: [

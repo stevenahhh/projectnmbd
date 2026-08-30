@@ -1,11 +1,13 @@
 'use client';
 
-import { History, Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
+import { Check, History, Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TIMELINE_COLORS } from '@/lib/timeline';
 
 interface TimelineToolbarProps {
   historyCount: number;
+  showDone: boolean;
+  onToggleDone: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onReset: () => void;
@@ -16,6 +18,8 @@ interface TimelineToolbarProps {
 /** 타임라인 머리 — 범례와 확대·축소, 수정 이력. */
 export function TimelineToolbar({
   historyCount,
+  showDone,
+  onToggleDone,
   onZoomIn,
   onZoomOut,
   onReset,
@@ -36,6 +40,16 @@ export function TimelineToolbar({
         </span>
       </div>
 
+      <Button
+        size="sm"
+        variant={showDone ? 'secondary' : 'ghost'}
+        className="h-8 text-xs"
+        aria-pressed={showDone}
+        onClick={onToggleDone}
+      >
+        <Check /> 완료 포함
+      </Button>
+
       <div id="tut-timeline-zoom" className="flex items-center gap-1">
         <Button size="icon" variant="outline" className="size-8" aria-label="축소" onClick={onZoomOut}>
           <ZoomOut />
@@ -51,7 +65,7 @@ export function TimelineToolbar({
         </Button>
       </div>
 
-      <Button id="tut-timeline-history" size="sm" variant="outline" onClick={onOpenHistory}>
+      <Button id="tut-timeline-history" size="sm" variant="ghost" className="h-8 text-xs" onClick={onOpenHistory}>
         <History /> 수정 이력 {historyCount > 0 ? historyCount : ''}
       </Button>
     </div>

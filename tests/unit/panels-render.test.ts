@@ -127,10 +127,42 @@ describe('새 화면 렌더 스모크', () => {
     );
     expect(html).toContain('모델 학습');
     expect(html).toContain('baseline 학습');
-    // 자식 막대는 앞에 이음선이 붙는다
+    // 자식 항목은 거터에서 이음선과 함께 들여쓴다
     expect(html).toContain('└');
-    // 같은 날 마감 둘은 점 하나로 묶인다
-    expect(html).toContain('2개');
+    // 같은 날 마감 둘은 점 하나로 묶이고, 라벨 자리가 없으면 개수가 점 안에 들어간다
+    expect(html).toMatch(/>2<\/text>/);
+    // 제목은 거터(x=12~)에, 막대는 차트 영역(x>=160)에 그려진다
+    expect(html).toMatch(/<text x="12"/);
+    const barX = [...html.matchAll(/<rect x="([\d.]+)"[^>]*rx="5"/g)].map((match) => Number(match[1]));
+    expect(barX.length).toBeGreaterThan(0);
+    expect(Math.min(...barX)).toBeGreaterThanOrEqual(160);
+  });
+
+  it('완료된 마감은 기본으로 타임라인에서 빠진다', () => {
+    const done = (id: string, title: string, due: string) =>
+      ({
+        id,
+        title,
+        actorUid: 'u1',
+        assigneeUid: 'u1',
+        status: 'done',
+        order: 2,
+        dueAt: ts(due),
+      }) as unknown as TeamTask;
+    const html = renderToStaticMarkup(
+      createElement(GanttPanel, {
+        team: TEAM,
+        uid: 'u1',
+        events: [],
+        tasks: [
+          done('d1', '끝난 일', '2026-08-10T02:00:00Z'),
+          done('d2', '끝난 일 둘', '2026-08-12T02:00:00Z'),
+        ],
+      }),
+    );
+    // 마감 점(반지름 6~7)이 하나도 그려지지 않는다 — 아이콘의 원과 구분해 반지름으로 본다
+    expect(html).not.toMatch(/<circle[^>]*r="[67]"/);
+    expect(html).toContain('완료 포함');
   });
 
   it('기록이 없으면 로그도 빈 상태를 알린다', () => {
