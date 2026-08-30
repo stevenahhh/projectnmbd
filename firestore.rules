@@ -182,8 +182,25 @@ service cloud.firestore {
         allow get, list: if member(teamId);
         allow create: if activeMember(teamId)
           && request.resource.data.actorUid == request.auth.uid;
-        allow update: if activeMember(teamId);
+        // 살아있는 회의록은 멤버가 고칠 수 있다. 삭제 직전 전환은 작성자·팀장, 복원은 팀장만.
+        allow update: if activeMember(teamId) && (
+          (!resource.data.get('deleted', false) && !request.resource.data.get('deleted', false))
+          || (request.resource.data.get('deleted', false)
+              && !resource.data.get('deleted', false)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'deletedAt'])
+              && (resource.data.actorUid == request.auth.uid || leaderOnlyWrite(teamId)))
+          || (!request.resource.data.get('deleted', false)
+              && resource.data.get('deleted', false)
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'deletedAt'])
+              && leaderOnlyWrite(teamId))
+        );
         allow delete: if false;
+
+        match /versions/{versionId} {
+          allow get, list: if member(teamId);
+          allow create: if activeMember(teamId) && actorAndServerTime();
+          allow update, delete: if false;
+        }
       }
 
       // ── 대화 (S8 create-only) ────────────────────────────

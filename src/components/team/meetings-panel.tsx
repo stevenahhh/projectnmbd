@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarCheck, ClipboardList } from 'lucide-react';
+import { CalendarCheck, ClipboardList, History, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { checkAttend } from '@/lib/team-ops';
 import { formatKST } from '@/lib/time';
 import type { Meeting, Team } from '@/lib/types';
 import { MeetingCompose } from './meeting-compose';
+import { MeetingVersionsDialog } from './meeting-versions';
 import { SummaryLines } from './meeting-summary';
 
 interface MeetingsPanelProps {
@@ -22,6 +23,8 @@ interface MeetingsPanelProps {
 /** 회의록 (§2.8-3) — 정형 템플릿, 화자 분리·녹음 없음. 참석 체크가 출석 기록이다. */
 export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
   const [reading, setReading] = useState<Meeting | null>(null);
+  const [editing, setEditing] = useState<Meeting | null>(null);
+  const [versionsOpen, setVersionsOpen] = useState(false);
 
   const attend = async (meeting: Meeting) => {
     try {
@@ -37,6 +40,10 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
       <div className="flex justify-end">
         <MeetingCompose team={team} uid={uid} />
       </div>
+
+      {editing ? (
+        <MeetingCompose key={editing.id} team={team} uid={uid} meeting={editing} onClose={() => setEditing(null)} />
+      ) : null}
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {meetings.map((meeting) => (
@@ -55,6 +62,7 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
             </div>
             <p className="text-muted-foreground text-xs">
               {formatKST(meeting.startedAt)} · {meeting.durationMin}분
+              {meeting.editedAt ? <span className="ml-1.5 text-[10px]">수정됨</span> : null}
             </p>
             <SummaryLines summary3={meeting.summary3} compact />
             <div className="mt-auto flex items-center justify-between gap-2 pt-1">
@@ -136,19 +144,28 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
                 )}
               </section>
 
-              <Button
-                variant={reading.attendeeUids.includes(uid) ? 'secondary' : 'default'}
-                className="self-start"
-                onClick={() =>
-                  void attend(reading).then(() => setReading(null))
-                }
-              >
-                <CalendarCheck /> {reading.attendeeUids.includes(uid) ? '참석함' : '참석 체크'}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" onClick={() => { setReading(null); setEditing(reading); }}>
+                  <Pencil /> 수정
+                </Button>
+                <Button variant="outline" onClick={() => setVersionsOpen(true)}>
+                  <History /> 버전 {Math.max(0, (reading.latestVersion ?? 1) - 1)}개
+                </Button>
+                <Button
+                  variant={reading.attendeeUids.includes(uid) ? 'secondary' : 'default'}
+                  onClick={() => void attend(reading).then(() => setReading(null))}
+                >
+                  <CalendarCheck /> {reading.attendeeUids.includes(uid) ? '참석함' : '참석 체크'}
+                </Button>
+              </div>
             </article>
           ) : null}
         </DialogContent>
       </Dialog>
+
+      {reading ? (
+        <MeetingVersionsDialog open={versionsOpen} onOpenChange={setVersionsOpen} team={team} uid={uid} meeting={reading} />
+      ) : null}
     </div>
   );
 }

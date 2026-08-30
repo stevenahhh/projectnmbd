@@ -27,6 +27,10 @@ export function describeEvent(type: EventType, payload: Record<string, unknown>)
       return `회의 「${name || '제목 없음'}」 작성`;
     case 'meeting.attend':
       return `회의 「${name || '회의'}」 참석`;
+    case 'meeting.update':
+      return `회의 「${name || '회의'}」 수정`;
+    case 'meeting.restore':
+      return `회의 「${name || '회의'}」 복원`;
     case 'message.post':
       return `대화 ${num('chars')}자`;
     case 'note.add':

@@ -9,6 +9,8 @@ export type EventType =
   | 'task.complete'
   | 'meeting.create'
   | 'meeting.attend'
+  | 'meeting.update'
+  | 'meeting.restore'
   | 'message.post'
   | 'note.add'
   | 'team.create'
@@ -100,6 +102,11 @@ export interface Meeting {
   attendeeUids: string[];
   summary3: string;
   body: string;
+  /** 저장 1회 = 버전 1개. 문서와 같은 규칙이다. */
+  latestVersion?: number;
+  editedAt?: Timestamp | null;
+  deleted?: boolean;
+  deletedAt?: Timestamp | null;
 }
 
 export interface Message {

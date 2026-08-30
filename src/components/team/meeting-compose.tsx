@@ -9,67 +9,90 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RichEditor } from '@/components/ui/rich-editor';
-import { createMeeting } from '@/lib/team-ops';
-import type { Team } from '@/lib/types';
+import { createMeeting, updateMeeting } from '@/lib/team-ops';
+import { toLocalInputValue } from '@/lib/timeline';
+import type { Meeting, Team } from '@/lib/types';
 import { SummaryComposer, useMeetingSummary } from './meeting-summary';
 
 /** 본문이 이만큼은 있어야 요약을 만든다. */
 const MIN_BODY_FOR_SUMMARY = 30;
 
+interface MeetingComposeProps {
+  team: Team;
+  uid: string;
+  /** 있으면 편집 모드 — 화면을 스스로 열고(트리거 없음) 수정을 저장한다. */
+  meeting?: Meeting | null;
+  onClose?: () => void;
+}
+
 /**
- * 회의록 작성 창.
- * 저장 전에 AI 요약을 한 번 거치게 한다 — 요약이 있어야 목록에서 회의를 알아볼 수 있다.
+ * 회의록 작성·수정 창.
+ * 새 회의는 저장 전에 AI 요약을 한 번 거치게 한다. 수정할 때는 요약을 다시 만들지 않아도 되고,
+ * 전문은 버전으로 남는다(저장 1회 = 버전 1개).
  */
-export function MeetingCompose({ team, uid }: { team: Team; uid: string }) {
+export function MeetingCompose({ team, uid, meeting = null, onClose }: MeetingComposeProps) {
+  const isEdit = Boolean(meeting);
   const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [startedAt, setStartedAt] = useState('');
-  const [durationMin, setDurationMin] = useState('60');
-  const [place, setPlace] = useState('');
-  const [online, setOnline] = useState(false);
-  const [attendees, setAttendees] = useState<string[]>([uid]);
-  const [body, setBody] = useState('');
+  const [title, setTitle] = useState(meeting?.title ?? '');
+  const [startedAt, setStartedAt] = useState(meeting ? toLocalInputValue(meeting.startedAt.toDate()) : '');
+  const [durationMin, setDurationMin] = useState(String(meeting?.durationMin ?? 60));
+  const [place, setPlace] = useState(meeting?.place ?? '');
+  const [online, setOnline] = useState(meeting?.online ?? false);
+  const [attendees, setAttendees] = useState<string[]>(meeting?.attendeeUids ?? [uid]);
+  const [body, setBody] = useState(meeting?.body ?? '');
   const summary = useMeetingSummary();
+  const close = () => {
+    setOpen(false);
+    onClose?.();
+  };
 
   const submit = async () => {
     if (!title.trim() || !startedAt || !place.trim()) {
       toast.error('주제·일시·장소를 입력하세요');
       return;
     }
+    const input = {
+      title: title.trim(),
+      startedAt: new Date(startedAt),
+      durationMin: Number(durationMin) || 60,
+      place: place.trim(),
+      online,
+      attendeeUids: attendees,
+      summary3: summary.lines
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .join('\n'),
+      body: body.trim(),
+    };
     try {
-      await createMeeting(team.id, uid, {
-        title: title.trim(),
-        startedAt: new Date(startedAt),
-        durationMin: Number(durationMin) || 60,
-        place: place.trim(),
-        online,
-        attendeeUids: attendees,
-        summary3: summary.lines
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .join('\n'),
-        body: body.trim(),
-      });
-      setOpen(false);
-      setTitle('');
-      setBody('');
-      summary.reset();
-      toast.success('회의록을 저장했어요');
+      if (isEdit && meeting) {
+        await updateMeeting(team.id, uid, meeting, input);
+        toast.success('회의록을 수정했어요 — 이전 전문은 버전으로 남습니다');
+      } else {
+        await createMeeting(team.id, uid, input);
+        toast.success('회의록을 저장했어요');
+      }
+      close();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '저장 실패');
     }
   };
 
+  // 편집 모드는 화면이 스스로 열린다 (트리거 없음)
+  const dialogOpen = isEdit ? Boolean(meeting) : open;
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button id="tut-meeting-new">
-          <Plus /> 회의록 작성
-        </Button>
-      </DialogTrigger>
+    <Dialog open={dialogOpen} onOpenChange={(next) => (isEdit ? (!next ? close() : undefined) : setOpen(next))}>
+      {!isEdit ? (
+        <DialogTrigger asChild>
+          <Button id="tut-meeting-new">
+            <Plus /> 회의록 작성
+          </Button>
+        </DialogTrigger>
+      ) : null}
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>회의록</DialogTitle>
+          <DialogTitle>{isEdit ? '회의록 수정' : '회의록'}</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
@@ -131,8 +154,9 @@ export function MeetingCompose({ team, uid }: { team: Team; uid: string }) {
           </div>
         </div>
         <DialogFooter>
-          {/* 요약을 만들어야 저장이 열린다. 본문을 고치면 다시 만들게 된다. */}
-          {summary.isFresh(body) ? (
+          {isEdit ? (
+            <Button onClick={() => void submit()}>저장하고 새 버전 만들기</Button>
+          ) : summary.isFresh(body) ? (
             <Button onClick={() => void submit()}>저장</Button>
           ) : (
             <Button
@@ -143,8 +167,7 @@ export function MeetingCompose({ team, uid }: { team: Team; uid: string }) {
               {summary.status === 'running' ? '요약 생성 중…' : 'AI 요약 생성'}
             </Button>
           )}
-          {/* AI 가 응답하지 못했을 때 쓴 글이 갇히지 않도록 열어 두는 문 */}
-          {summary.status === 'failed' ? (
+          {!isEdit && summary.status === 'failed' ? (
             <Button variant="ghost" onClick={() => void submit()}>
               요약 없이 저장
             </Button>

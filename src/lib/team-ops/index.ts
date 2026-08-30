@@ -4,7 +4,7 @@
  */
 export { createTask, completeTask, reopenTask, updateMilestone, reparentMilestone } from './tasks';
 export { subscribeMessages, postMessage } from './messages';
-export { createMeeting, checkAttend } from './meetings';
+export { createMeeting, checkAttend, updateMeeting, restoreMeeting } from './meetings';
 export { createTeamDoc, saveTeamDoc, setDocLock } from './docs';
 export { registerFile, commentOnFile } from './files';
 export { assignRole, softDeleteTeam, addNote } from './members';
