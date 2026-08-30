@@ -91,7 +91,14 @@ export function TimelineHistoryDialog({ open, onOpenChange, team, history }: His
         </DialogHeader>
         <div className="flex max-h-[60vh] flex-col divide-y overflow-auto">
           {history.map((event) => {
-            const payload = (event.payload ?? {}) as { title?: string; dueAt?: string; prevDueAt?: string };
+            const payload = (event.payload ?? {}) as {
+              title?: string;
+              dueAt?: string;
+              prevDueAt?: string;
+              parentId?: string | null;
+              parentTitle?: string | null;
+            };
+            const moved = 'parentId' in payload;
             return (
               <div key={event.id} className="flex flex-col gap-0.5 py-2.5 text-xs">
                 <span className="font-medium">
@@ -99,6 +106,7 @@ export function TimelineHistoryDialog({ open, onOpenChange, team, history }: His
                 </span>
                 <span className="text-muted-foreground">
                   {formatKST(event.at)}
+                  {moved ? (payload.parentTitle ? ` · 「${payload.parentTitle}」 하위로` : ' · 최상위로') : ''}
                   {payload.prevDueAt && payload.dueAt
                     ? ` · 마감 ${formatKST(new Date(payload.prevDueAt))} → ${formatKST(new Date(payload.dueAt))}`
                     : ''}

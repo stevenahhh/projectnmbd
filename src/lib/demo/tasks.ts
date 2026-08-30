@@ -10,7 +10,10 @@ export interface DemoTaskDef {
   done?: RelativeStamp;
   /** 마일스톤 막대 — milestoneStartAt 이 있으면 간트 막대로 렌더한다. */
   milestoneStartAt?: RelativeStamp;
-  milestoneId?: string;
+  /** 문서 id 로 쓸 고정 키 — 다른 항목이 부모로 가리킬 수 있게 한다. */
+  key?: string;
+  /** 상위 항목의 key. 타임라인에서 한 단 안으로 들어간다. */
+  parentKey?: string;
   order: number;
 }
 
@@ -45,10 +48,13 @@ export const DEMO_TASKS: DemoTaskDef[] = [
   ...DEMO_DEADLINE_TASKS,
 ];
 
-/** 간트 마일스톤 4개 — 부트스트랩 시점에 2개 진행 중. */
+/** 간트 마일스톤 — 큰 단계 4개와 그 아래 하위 구간 3개. */
 export const DEMO_MILESTONES: DemoTaskDef[] = [
-  { title: '데이터 수집', assignee: 0, due: { day: -18, hour: 23 }, status: 'done', done: { day: -20, hour: 9 }, milestoneStartAt: { day: -28, hour: 9 }, milestoneId: 'ms1', order: 31 },
-  { title: '모델 학습', assignee: 1, due: { day: 1, hour: 23 }, status: 'todo', milestoneStartAt: { day: -20, hour: 9 }, milestoneId: 'ms2', order: 32 },
-  { title: '결과 분석', assignee: 1, due: { day: 3, hour: 23 }, status: 'todo', milestoneStartAt: { day: -3, hour: 9 }, milestoneId: 'ms3', order: 33 },
-  { title: '발표 준비', assignee: 2, due: { day: 6, hour: 23 }, status: 'todo', milestoneStartAt: { day: 3, hour: 9 }, milestoneId: 'ms4', order: 34 },
+  { title: '데이터 수집', assignee: 0, due: { day: -18, hour: 23 }, status: 'done', done: { day: -20, hour: 9 }, milestoneStartAt: { day: -28, hour: 9 }, key: 'ms1', order: 31 },
+  { title: '모델 학습', assignee: 1, due: { day: 1, hour: 23 }, status: 'todo', milestoneStartAt: { day: -20, hour: 9 }, key: 'ms2', order: 32 },
+  { title: '결과 분석', assignee: 1, due: { day: 3, hour: 23 }, status: 'todo', milestoneStartAt: { day: -3, hour: 9 }, key: 'ms3', order: 33 },
+  { title: '발표 준비', assignee: 2, due: { day: 6, hour: 23 }, status: 'todo', milestoneStartAt: { day: 3, hour: 9 }, key: 'ms4', order: 34 },
+  { title: '전처리 파이프라인', assignee: 1, due: { day: -14, hour: 23 }, status: 'done', done: { day: -15, hour: 15 }, milestoneStartAt: { day: -20, hour: 9 }, key: 'ms2a', parentKey: 'ms2', order: 35 },
+  { title: 'baseline 학습·튜닝', assignee: 1, due: { day: 1, hour: 12 }, status: 'todo', milestoneStartAt: { day: -13, hour: 9 }, key: 'ms2b', parentKey: 'ms2', order: 36 },
+  { title: '슬라이드 작성', assignee: 2, due: { day: 5, hour: 23 }, status: 'todo', milestoneStartAt: { day: 3, hour: 9 }, key: 'ms4a', parentKey: 'ms4', order: 37 },
 ];

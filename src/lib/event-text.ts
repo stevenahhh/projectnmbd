@@ -31,8 +31,13 @@ export function describeEvent(type: EventType, payload: Record<string, unknown>)
       return `대화 ${num('chars')}자`;
     case 'note.add':
       return `기록 「${name || ''}」`;
-    case 'milestone.update':
+    case 'milestone.update': {
+      if ('parentId' in payload) {
+        const parent = text('parentTitle');
+        return parent ? `타임라인 「${name || '항목'}」 → 「${parent}」 하위로` : `타임라인 「${name || '항목'}」 최상위로`;
+      }
       return `타임라인 「${name || '항목'}」 기간 수정`;
+    }
     case 'team.create':
       return `팀 「${name || ''}」 만듦`;
     case 'member.join':

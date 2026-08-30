@@ -66,7 +66,7 @@ describe('데모 데이터셋 (A.10 개정)', () => {
     expect(hours).toEqual([20, 2, 0.5]);
   });
 
-  it('문서 3개 × 버전 3~4, 파일 5개 + 첨삭, 회의 4건(오프라인 3·비대면 1), 마일스톤 4개 중 2개 진행 중', () => {
+  it('문서 3개 × 버전 3~4, 파일 5개 + 첨삭, 회의 4건(오프라인 3·비대면 1), 마일스톤 7개 중 3개 진행 중', () => {
     const ds = buildDemoDataset(VISITOR, BOOTSTRAP);
     expect(ds.docs.length).toBe(3);
     for (const doc of ds.docs) {
@@ -88,8 +88,21 @@ describe('데모 데이터셋 (A.10 개정)', () => {
       const endTime = BOOTSTRAP.getTime() + end.day * 86400000;
       return startTime <= bootstrap && bootstrap < endTime;
     });
-    expect(DEMO_MILESTONES.length).toBe(4);
-    expect(inProgress.length).toBe(2);
+    expect(DEMO_MILESTONES.length).toBe(7);
+    expect(inProgress.length).toBe(3);
+  });
+
+  it('마일스톤은 최상위 4개와 하위 3개로 묶이고, 하위는 실재하는 상위를 가리킨다', () => {
+    const keys = new Set(DEMO_MILESTONES.map((m) => m.key));
+    const children = DEMO_MILESTONES.filter((m) => m.parentKey);
+    expect(DEMO_MILESTONES.filter((m) => !m.parentKey)).toHaveLength(4);
+    expect(children).toHaveLength(3);
+    for (const child of children) expect(keys.has(child.parentKey)).toBe(true);
+  });
+
+  it('할 일 문서 id 는 겹치지 않는다 — 상위 참조가 id 로 이뤄진다', () => {
+    const ids = buildDemoDataset(VISITOR, BOOTSTRAP).tasks.map((task) => task.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('태윤의 활동은 마지막 2일에 몰려 있다', () => {

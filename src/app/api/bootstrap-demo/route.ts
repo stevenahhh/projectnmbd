@@ -58,7 +58,7 @@ async function writeDataset(db: import('firebase-admin/firestore').Firestore, da
 
   for (const e of dataset.events) writer.set(teamRef.collection('events').doc(), e);
   for (const m of dataset.messages) writer.set(teamRef.collection('messages').doc(), m);
-  for (const t of dataset.tasks) writer.set(teamRef.collection('tasks').doc(), t);
+  for (const { id, ...task } of dataset.tasks) writer.set(teamRef.collection('tasks').doc(id), task);
   for (const m of dataset.meetings) writer.set(teamRef.collection('meetings').doc(), m);
   await Promise.all(writer.flush());
 

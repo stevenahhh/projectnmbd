@@ -3,9 +3,10 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { Timestamp } from 'firebase/firestore';
 import { ContributionPie } from '@/components/team/contribution-pie';
+import { GanttPanel } from '@/components/team/gantt-panel';
 import { LogsPanel } from '@/components/team/logs-panel';
 import type { MemberContribution } from '@/lib/contribution';
-import { DEFAULT_WEIGHTS, type LedgerEvent, type Team } from '@/lib/types';
+import { DEFAULT_WEIGHTS, type LedgerEvent, type Team, type TeamTask } from '@/lib/types';
 
 /** Firestore Timestamp 대역 — 화면은 toDate() 만 쓴다. */
 const ts = (iso: string) => ({ toDate: () => new Date(iso) }) as Timestamp;
@@ -93,6 +94,43 @@ describe('새 화면 렌더 스모크', () => {
     expect(html.match(/실험 표/g) ?? []).toHaveLength(60);
     expect(html).toContain('남은 10건');
     expect(html).not.toContain('더 보기');
+  });
+
+  it('타임라인은 하위 항목을 들여쓰고 같은 날 마감을 점 하나로 묶는다', () => {
+    const bar = (id: string, title: string, start: string, due: string, parent?: string) =>
+      ({
+        id,
+        title,
+        actorUid: 'u1',
+        assigneeUid: 'u1',
+        status: 'todo',
+        order: 1,
+        dueAt: ts(due),
+        milestoneStartAt: ts(start),
+        ...(parent ? { milestoneId: parent } : {}),
+      }) as unknown as TeamTask;
+    const deadline = (id: string, title: string, due: string) =>
+      ({ id, title, actorUid: 'u1', assigneeUid: 'u1', status: 'todo', order: 2, dueAt: ts(due) }) as unknown as TeamTask;
+
+    const html = renderToStaticMarkup(
+      createElement(GanttPanel, {
+        team: TEAM,
+        uid: 'u1',
+        events: [],
+        tasks: [
+          bar('ms2', '모델 학습', '2026-08-05T00:00:00Z', '2026-08-25T00:00:00Z'),
+          bar('ms2b', 'baseline 학습', '2026-08-10T00:00:00Z', '2026-08-20T00:00:00Z', 'ms2'),
+          deadline('t1', '리허설', '2026-08-18T02:00:00Z'),
+          deadline('t2', '슬라이드', '2026-08-18T09:00:00Z'),
+        ],
+      }),
+    );
+    expect(html).toContain('모델 학습');
+    expect(html).toContain('baseline 학습');
+    // 자식 막대는 앞에 이음선이 붙는다
+    expect(html).toContain('└');
+    // 같은 날 마감 둘은 점 하나로 묶인다
+    expect(html).toContain('2개');
   });
 
   it('기록이 없으면 로그도 빈 상태를 알린다', () => {

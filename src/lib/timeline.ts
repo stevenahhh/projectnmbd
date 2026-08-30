@@ -1,14 +1,25 @@
 /**
  * 타임라인 좌표·시간 계산 — 화면에 의존하지 않는 부분만 모아 둔다.
- * 드래그로 기간을 바꾸는 규칙(30분 스냅, 최소 폭)이 여기 있고 테스트로 고정된다.
+ *
+ * 보이는 구간(view)은 데이터 전체 구간과 별개다. 줌은 커서 아래 시각을 고정한 채
+ * 구간 길이만 바꾸고, 눈금 간격과 스냅 폭은 그 구간에서 되짚어 고른다.
  */
 
-export const SNAP_MS = 30 * 60 * 1000;
+export const MINUTE_MS = 60 * 1000;
+export const HOUR_MS = 60 * MINUTE_MS;
+export const DAY_MS = 24 * HOUR_MS;
+
+/** 드래그 스냅의 최소 단위. 더 확대해도 이보다 잘게 잡히지 않는다. */
+export const SNAP_MS = 30 * MINUTE_MS;
+
 export const VIEW_WIDTH = 960;
 export const AXIS_HEIGHT = 46;
+export const MARKER_ROW_HEIGHT = 18;
 export const BAR_HEIGHT = 26;
 export const ROW_GAP = 12;
+export const ROW_PITCH = BAR_HEIGHT + ROW_GAP;
 export const HANDLE_PX = 10;
+export const INDENT_PX = 14;
 
 export const TIMELINE_COLORS = {
   todo: '#4b5bd6',
@@ -24,8 +35,24 @@ export interface DragState {
   taskId: string;
   mode: DragMode;
   pointerX: number;
+  pointerY: number;
   baseStart: number;
   baseEnd: number;
+  startMs: number;
+  endMs: number;
+  /** 세로로 끌어 다른 막대 위에 올렸을 때의 부모 후보. null 이면 최상위로 뺀다. */
+  dropParentId: string | null;
+  moved: boolean;
+}
+
+/** 포인터를 따라다니는 말풍선 — 드래그 중 기간과 마감 점 내역을 같은 모양으로 보여준다. */
+export interface Bubble {
+  x: number;
+  y: number;
+  lines: string[];
+}
+
+export interface ViewRange {
   startMs: number;
   endMs: number;
 }
@@ -39,7 +66,12 @@ export function stamp(ms: number): string {
 }
 
 export function snapToHalfHour(ms: number): number {
-  return Math.round(ms / SNAP_MS) * SNAP_MS;
+  return snapTo(ms, SNAP_MS);
+}
+
+export function snapTo(ms: number, stepMs: number): number {
+  const step = Math.max(1, stepMs);
+  return Math.round(ms / step) * step;
 }
 
 /** datetime-local 입력값 — 로컬 시각 기준이라 ISO 문자열을 쓸 수 없다. */
@@ -48,48 +80,168 @@ export function toLocalInputValue(date: Date | null): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-/** 드래그 결과 기간 — 이동은 길이를 지키고, 끝을 끌 때는 최소 30분을 지킨다. */
+/** 눈금·스냅이 고를 수 있는 간격. 사람이 시계로 읽을 수 있는 값만 둔다. */
+export const NICE_STEPS_MS = [
+  30 * MINUTE_MS,
+  HOUR_MS,
+  3 * HOUR_MS,
+  6 * HOUR_MS,
+  12 * HOUR_MS,
+  DAY_MS,
+  2 * DAY_MS,
+  7 * DAY_MS,
+  14 * DAY_MS,
+  28 * DAY_MS,
+];
+
+/** 라벨이 겹치지 않는 가장 촘촘한 간격을 고른다 (레퍼런스 niceTickHours 의 일반화). */
+export function niceStep(rangeMs: number, widthPx: number, minGapPx: number): number {
+  if (rangeMs <= 0 || widthPx <= 0) return DAY_MS;
+  const msPerPx = rangeMs / widthPx;
+  for (const step of NICE_STEPS_MS) {
+    if (step / msPerPx >= minGapPx) return step;
+  }
+  return NICE_STEPS_MS[NICE_STEPS_MS.length - 1];
+}
+
+/** 드래그 스냅 폭 — 확대할수록 잘게, 축소하면 하루 단위로 잡힌다. */
+export function snapStepFor(rangeMs: number, widthPx: number): number {
+  return Math.max(SNAP_MS, niceStep(rangeMs, widthPx, 5));
+}
+
+export interface Tick {
+  ms: number;
+  label: string;
+  /** 날짜가 바뀌는 자리 — 굵게 그린다. */
+  major: boolean;
+}
+
+function startOfDayMs(ms: number): number {
+  const date = new Date(ms);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+function tickLabel(ms: number, stepMs: number): { label: string; major: boolean } {
+  const date = new Date(ms);
+  if (stepMs < DAY_MS) {
+    const midnight = date.getHours() === 0 && date.getMinutes() === 0;
+    return midnight
+      ? { label: `${date.getMonth() + 1}/${date.getDate()}`, major: true }
+      : { label: `${pad(date.getHours())}:${pad(date.getMinutes())}`, major: false };
+  }
+  const firstOfMonth = date.getDate() === 1;
+  return firstOfMonth
+    ? { label: `${date.getMonth() + 1}월`, major: true }
+    : { label: `${date.getMonth() + 1}/${date.getDate()}`, major: false };
+}
+
+/** 눈금은 자정 기준으로 정렬한다 — 시계에 없는 자리에 선이 서지 않게. */
+export function generateTicks(startMs: number, endMs: number, stepMs: number): Tick[] {
+  const ticks: Tick[] = [];
+  if (stepMs >= 28 * DAY_MS) {
+    const cursor = new Date(startMs);
+    cursor.setDate(1);
+    cursor.setHours(0, 0, 0, 0);
+    while (cursor.getTime() <= endMs) {
+      if (cursor.getTime() >= startMs) ticks.push({ ms: cursor.getTime(), label: `${cursor.getMonth() + 1}월`, major: true });
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+    return ticks;
+  }
+
+  const dayStart = startOfDayMs(startMs);
+  const first = dayStart + Math.ceil((startMs - dayStart) / stepMs) * stepMs;
+  for (let ms = first; ms <= endMs; ms += stepMs) {
+    ticks.push({ ms, ...tickLabel(ms, stepMs) });
+  }
+  return ticks;
+}
+
+/** 커서 아래 시각을 고정한 채 구간 길이만 바꾼다. */
+export function zoomRange(view: ViewRange, factor: number, anchorMs: number, minMs: number, maxMs: number): ViewRange {
+  const rangeMs = view.endMs - view.startMs;
+  const nextRange = Math.max(minMs, Math.min(maxMs, rangeMs * factor));
+  if (nextRange === rangeMs) return view;
+  const ratio = (anchorMs - view.startMs) / rangeMs;
+  const startMs = anchorMs - ratio * nextRange;
+  return { startMs, endMs: startMs + nextRange };
+}
+
+export function panRange(view: ViewRange, deltaMs: number): ViewRange {
+  return { startMs: view.startMs + deltaMs, endMs: view.endMs + deltaMs };
+}
+
+/** 드래그 결과 기간 — 이동은 길이를 지키고, 끝을 끌 때는 최소 한 칸을 지킨다. */
 export function dragRange(
   mode: DragMode,
   baseStart: number,
   baseEnd: number,
   deltaMs: number,
+  stepMs: number = SNAP_MS,
 ): { startMs: number; endMs: number } {
+  const step = Math.max(1, stepMs);
   if (mode === 'move') {
-    const startMs = snapToHalfHour(baseStart + deltaMs);
+    const startMs = snapTo(baseStart + deltaMs, step);
     return { startMs, endMs: startMs + (baseEnd - baseStart) };
   }
   if (mode === 'start') {
-    return { startMs: Math.min(snapToHalfHour(baseStart + deltaMs), baseEnd - SNAP_MS), endMs: baseEnd };
+    return { startMs: Math.min(snapTo(baseStart + deltaMs, step), baseEnd - step), endMs: baseEnd };
   }
-  return { startMs: baseStart, endMs: Math.max(snapToHalfHour(baseEnd + deltaMs), baseStart + SNAP_MS) };
+  return { startMs: baseStart, endMs: Math.max(snapTo(baseEnd + deltaMs, step), baseStart + step) };
 }
 
-/** 축 위 월 눈금 — 구간에 걸치는 매월 1일. */
-export function monthTicks(startMs: number, endMs: number): { x: number; label: string }[] {
-  const span = Math.max(1, endMs - startMs);
-  const ticks: { x: number; label: string }[] = [];
-  const cursor = new Date(startMs);
-  cursor.setDate(1);
-  cursor.setHours(0, 0, 0, 0);
-  while (cursor.getTime() <= endMs) {
-    if (cursor.getTime() >= startMs) {
-      ticks.push({ x: ((cursor.getTime() - startMs) / span) * VIEW_WIDTH, label: `${cursor.getMonth() + 1}월` });
-    }
-    cursor.setMonth(cursor.getMonth() + 1);
-  }
-  return ticks;
-}
-
-/** 같은 날 마감을 하나의 점으로 묶는다. 오래된 날짜가 앞이다. */
+/** 같은 날 마감을 하나로 묶는다. 오래된 날짜가 앞이다. */
 export function groupByDay<T>(entries: { ms: number; item: T }[]): { ms: number; items: T[] }[] {
-  const groups = new Map<string, { ms: number; items: T[] }>();
+  const groups = new Map<number, { ms: number; items: T[] }>();
   for (const entry of entries) {
-    const date = new Date(entry.ms);
-    const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    const key = startOfDayMs(entry.ms);
     const bucket = groups.get(key);
     if (bucket) bucket.items.push(entry.item);
     else groups.set(key, { ms: entry.ms, items: [entry.item] });
   }
   return [...groups.values()].sort((a, b) => a.ms - b.ms);
+}
+
+export interface PackedMarker<T> {
+  item: T;
+  ms: number;
+  x: number;
+  row: number;
+  /** 오른쪽 끝에 붙어 라벨을 왼쪽으로 뒤집은 경우. */
+  flip: boolean;
+}
+
+export const MARKER_RADIUS = 6;
+
+/**
+ * 점 + 라벨이 차지할 가상의 박스를 만들고, 앞선 박스와 겹치면 한 줄 아래로 내린다.
+ * 첫 줄부터 차례로 들어갈 자리를 찾는 first-fit — 왼쪽 점이 늘 위에 남는다.
+ */
+export function packMarkers<T>(
+  entries: { ms: number; item: T; labelWidth: number }[],
+  xOf: (ms: number) => number,
+  viewWidth: number,
+  gapPx = 6,
+): { markers: PackedMarker<T>[]; rows: number } {
+  const rowRight: number[] = [];
+  const markers: PackedMarker<T>[] = [];
+
+  for (const entry of [...entries].sort((a, b) => a.ms - b.ms)) {
+    const x = xOf(entry.ms);
+    const flip = x + MARKER_RADIUS + entry.labelWidth > viewWidth;
+    const left = flip ? x - MARKER_RADIUS - entry.labelWidth : x - MARKER_RADIUS;
+    const right = flip ? x + MARKER_RADIUS : x + MARKER_RADIUS + entry.labelWidth;
+
+    let row = rowRight.findIndex((edge) => edge + gapPx <= left);
+    if (row === -1) {
+      row = rowRight.length;
+      rowRight.push(right);
+    } else {
+      rowRight[row] = Math.max(rowRight[row], right);
+    }
+    markers.push({ item: entry.item, ms: entry.ms, x, row, flip });
+  }
+
+  return { markers, rows: rowRight.length };
 }

@@ -125,7 +125,7 @@ export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
           <div className="flex flex-wrap items-center gap-2">
             <span className={completed ? 'text-muted-foreground text-sm line-through' : 'text-sm font-medium'}>{task.title}</span>
             {dueBadge(task, now)}
-            {task.milestoneId ? <Badge variant="outline">마일스톤</Badge> : null}
+            {task.milestoneStartAt ? <Badge variant="outline">기간 항목</Badge> : null}
           </div>
           {task.desc ? <p className="text-muted-foreground text-xs">{task.desc}</p> : null}
           <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">

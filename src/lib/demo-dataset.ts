@@ -89,7 +89,7 @@ export interface DemoDataset {
   };
   events: { type: EventType; actorUid: string; payload: Record<string, unknown>; at: Date }[];
   messages: { actorUid: string; text: string; at: Date }[];
-  tasks: { title: string; desc?: string; actorUid: string; assigneeUid: string; dueAt: Date; status: 'done' | 'todo'; doneAt?: Date; milestoneId?: string; milestoneStartAt?: Date; order: number }[];
+  tasks: { id: string; title: string; desc?: string; actorUid: string; assigneeUid: string; dueAt: Date; status: 'done' | 'todo'; doneAt?: Date; milestoneId?: string; milestoneStartAt?: Date; order: number }[];
   docs: { title: string; versions: { body: string; charsDelta: number; actorUid: string; at: Date; version: number }[] }[];
   files: { name: string; contentType: string; sizeBytes: number; actorUid: string; caption: string; uploadedAt: Date }[];
   fileComments: { fileIndex: number; actorUid: string; text: string; at: Date }[];
@@ -171,6 +171,7 @@ export function buildDemoDataset(visitorUid: string, bootstrap: Date): DemoDatas
     const dueAt = at(t.due);
     // admin Firestore 는 undefined 를 거부한다 — 선택 필드는 값이 있을 때만 실린다
     const task: DemoDataset['tasks'][number] = {
+      id: t.key ?? `task-${t.order}`,
       title: t.title,
       actorUid: uidOf(0),
       assigneeUid: uidOf(t.assignee),
@@ -180,13 +181,13 @@ export function buildDemoDataset(visitorUid: string, bootstrap: Date): DemoDatas
     };
     if (t.desc !== undefined) task.desc = t.desc;
     if (t.done) task.doneAt = at(t.done);
-    if (t.milestoneId) task.milestoneId = t.milestoneId;
+    if (t.parentKey) task.milestoneId = t.parentKey;
     if (t.milestoneStartAt) task.milestoneStartAt = at(t.milestoneStartAt);
     tasks.push(task);
     events.push({
       type: 'task.create',
       actorUid: uidOf(0),
-      payload: { title: t.title, assigneeUid: uidOf(t.assignee), milestoneId: t.milestoneId ?? null },
+      payload: { title: t.title, assigneeUid: uidOf(t.assignee), milestoneId: t.parentKey ?? null },
       at: at({ day: Math.min(t.due.day - 1, t.milestoneStartAt?.day ?? t.due.day - 1), hour: 9 }),
     });
     if (t.status === 'done' && t.done) {

@@ -1,28 +1,33 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { History } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTimelineDrag, type BarRow } from '@/hooks/use-timeline-drag';
+import { useTimelineView } from '@/hooks/use-timeline-view';
 import { updateMilestone } from '@/lib/team-ops';
 import { toDate } from '@/lib/time';
 import {
-  SNAP_MS,
-  TIMELINE_COLORS,
+  AXIS_HEIGHT,
+  DAY_MS,
+  MARKER_ROW_HEIGHT,
+  ROW_PITCH,
   VIEW_WIDTH,
-  dragRange,
+  generateTicks,
   groupByDay,
-  monthTicks,
+  niceStep,
+  packMarkers,
+  snapStepFor,
   snapToHalfHour,
-  stamp,
   toLocalInputValue,
-  type DragMode,
-  type DragState,
+  type Bubble,
 } from '@/lib/timeline';
+import { layoutTree } from '@/lib/timeline-tree';
 import type { LedgerEvent, Team, TeamTask } from '@/lib/types';
-import { TimelineChart, type Bubble } from './timeline-chart';
+import { TimelineAxis, markerLabelWidth, type DeadlineGroup } from './timeline-axis';
+import { TimelineChart } from './timeline-chart';
 import { TimelineEditDialog, TimelineHistoryDialog, type TimelineForm } from './timeline-dialogs';
+import { TimelineToolbar } from './timeline-toolbar';
 
 interface GanttPanelProps {
   team: Team;
@@ -32,8 +37,9 @@ interface GanttPanelProps {
 }
 
 /**
- * 타임라인 (§2.8-4) — 기간이 있는 항목은 막대로 끌어 옮기거나 늘리고(30분 단위),
- * 마감만 있는 할 일은 위쪽 축에 날짜별 점으로 모은다.
+ * 타임라인 (§2.8-4) — 기간이 있는 항목은 막대, 마감만 있는 할 일은 위쪽 축의 점.
+ * 막대는 끌어 옮기고 늘리며, 위아래로 끌면 다른 막대의 하위 항목이 된다.
+ * 배경을 끌거나 가로 휠로 좌우 이동, ⌘/Ctrl+휠로 확대·축소한다.
  */
 export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -43,24 +49,51 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [form, setForm] = useState<TimelineForm>({ title: '', startAt: '', dueAt: '' });
   const [saving, setSaving] = useState(false);
-  const [drag, setDrag] = useState<DragState | null>(null);
+  const [pan, setPan] = useState<{ pointerX: number; startMs: number; endMs: number } | null>(null);
   const [bubble, setBubble] = useState<Bubble | null>(null);
 
-  const { bars, deadlineGroups, startMs, endMs } = useMemo(() => {
-    const barTasks = tasks.filter((task) => task.milestoneStartAt);
-    const rest = tasks.filter((task) => !task.milestoneStartAt);
-    const starts = [
-      team.startAt.toDate().getTime(),
-      ...barTasks.map((task) => toDate(task.milestoneStartAt)?.getTime() ?? Infinity),
-    ];
-    const ends = [team.dueAt.toDate().getTime(), ...tasks.map((task) => task.dueAt.toDate().getTime())];
-    return {
-      bars: barTasks,
-      deadlineGroups: groupByDay(rest.map((task) => ({ ms: task.dueAt.toDate().getTime(), item: task }))),
-      startMs: Math.min(...starts),
-      endMs: Math.max(...ends),
-    };
+  const bounds = useMemo(() => {
+    const starts = tasks.map((task) => toDate(task.milestoneStartAt)?.getTime() ?? Infinity);
+    const dues = tasks.map((task) => task.dueAt.toDate().getTime());
+    const startMs = Math.min(team.startAt.toDate().getTime(), ...starts);
+    const endMs = Math.max(team.dueAt.toDate().getTime(), ...dues);
+    const padding = Math.max(DAY_MS, (endMs - startMs) * 0.02);
+    return { startMs: startMs - padding, endMs: endMs + padding };
   }, [team, tasks]);
+
+  const { view, setView, zoomBy, pxToMs, reset, focus } = useTimelineView(bounds, svgRef);
+  const rangeMs = Math.max(1, view.endMs - view.startMs);
+  const x = useCallback((ms: number) => ((ms - view.startMs) / rangeMs) * VIEW_WIDTH, [view.startMs, rangeMs]);
+
+  const rows: BarRow[] = useMemo(() => {
+    const bars = tasks.filter((task) => task.milestoneStartAt);
+    const barIds = new Set(bars.map((task) => task.id));
+    return layoutTree(
+      bars.map((task) => ({
+        id: task.id,
+        parentId: task.milestoneId && barIds.has(task.milestoneId) ? task.milestoneId : null,
+        order: task.order,
+        task,
+      })),
+    );
+  }, [tasks]);
+
+  const ticks = useMemo(
+    () => generateTicks(view.startMs, view.endMs, niceStep(rangeMs, VIEW_WIDTH, 78)),
+    [view.startMs, view.endMs, rangeMs],
+  );
+
+  const { markers, markerRows } = useMemo(() => {
+    const groups = groupByDay(
+      tasks.filter((task) => !task.milestoneStartAt).map((task) => ({ ms: task.dueAt.toDate().getTime(), item: task })),
+    ).filter((group) => group.ms >= view.startMs - DAY_MS && group.ms <= view.endMs + DAY_MS);
+    const packed = packMarkers<DeadlineGroup>(
+      groups.map((group) => ({ ms: group.ms, item: group, labelWidth: markerLabelWidth(group.items.length) })),
+      (ms) => ((ms - view.startMs) / rangeMs) * VIEW_WIDTH,
+      VIEW_WIDTH,
+    );
+    return { markers: packed.markers, markerRows: Math.max(1, packed.rows) };
+  }, [tasks, view.startMs, rangeMs, view.endMs]);
 
   const history = useMemo(
     () =>
@@ -70,59 +103,39 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
     [events],
   );
 
-  const ticks = useMemo(() => monthTicks(startMs, endMs), [startMs, endMs]);
+  const chartTop = AXIS_HEIGHT + markerRows * MARKER_ROW_HEIGHT;
+  const height = chartTop + Math.max(1, rows.length) * ROW_PITCH + 16;
+
+  const { drag, beginDrag } = useTimelineDrag({
+    team,
+    uid,
+    tasks,
+    rows,
+    view,
+    pxToMs,
+    snapStep: snapStepFor(rangeMs, VIEW_WIDTH),
+    chartTop,
+    height,
+    svgRef,
+    onBubble: setBubble,
+  });
 
   useEffect(() => {
-    if (!drag) return;
-    const msPerViewPx = Math.max(1, endMs - startMs) / VIEW_WIDTH;
-
-    /** 클라이언트 픽셀 이동량을 시간으로 환산한다 (viewBox 스케일 보정). */
-    const pxToMs = (dxClient: number): number => {
-      const rect = svgRef.current?.getBoundingClientRect();
-      const scale = rect && rect.width > 0 ? VIEW_WIDTH / rect.width : 1;
-      return dxClient * scale * msPerViewPx;
-    };
-
+    if (!pan) return;
+    // 누른 순간의 구간을 기준으로 밀어야 손가락과 화면이 어긋나지 않는다
+    const base = { startMs: pan.startMs, endMs: pan.endMs };
     const move = (event: PointerEvent) => {
-      const next = dragRange(drag.mode, drag.baseStart, drag.baseEnd, pxToMs(event.clientX - drag.pointerX));
-      setDrag({ ...drag, ...next });
-      setBubble({ x: event.clientX, y: event.clientY, lines: [`${stamp(next.startMs)} - ${stamp(next.endMs)}`] });
+      const deltaMs = pxToMs(event.clientX - pan.pointerX, base);
+      setView({ startMs: base.startMs - deltaMs, endMs: base.endMs - deltaMs });
     };
-
-    const up = async () => {
-      const task = tasks.find((candidate) => candidate.id === drag.taskId);
-      setDrag(null);
-      setBubble(null);
-      if (!task) return;
-      if (drag.startMs === drag.baseStart && drag.endMs === drag.baseEnd) return;
-      try {
-        await updateMilestone(team.id, uid, task, {
-          title: task.title,
-          startAt: new Date(drag.startMs),
-          dueAt: new Date(drag.endMs),
-        });
-        toast.success(`${stamp(drag.startMs)} - ${stamp(drag.endMs)}로 옮겼어요`);
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : '수정하지 못했어요');
-      }
-    };
-
+    const up = () => setPan(null);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up, { once: true });
     return () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
     };
-  }, [drag, tasks, team.id, uid, startMs, endMs]);
-
-  const beginDrag = (event: React.PointerEvent, task: TeamTask, mode: DragMode) => {
-    if (team.archived) return;
-    event.preventDefault();
-    const baseEnd = task.dueAt.toDate().getTime();
-    const baseStart = toDate(task.milestoneStartAt)?.getTime() ?? baseEnd - SNAP_MS;
-    setDrag({ taskId: task.id, mode, pointerX: event.clientX, baseStart, baseEnd, startMs: baseStart, endMs: baseEnd });
-    setBubble({ x: event.clientX, y: event.clientY, lines: [`${stamp(baseStart)} - ${stamp(baseEnd)}`] });
-  };
+  }, [pan, pxToMs, setView]);
 
   const openEdit = (task: TeamTask) => {
     setEditing(task);
@@ -159,45 +172,61 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
     <Card>
       <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
         <CardTitle className="text-base">타임라인</CardTitle>
-        <div className="flex flex-wrap items-center gap-3">
-          <div id="tut-timeline-legend" className="text-muted-foreground flex flex-wrap items-center gap-3 text-xs">
-            <span className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-full" style={{ background: TIMELINE_COLORS.todo }} /> 예정 마감
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-full" style={{ background: TIMELINE_COLORS.done }} /> 완료
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-full" style={{ background: TIMELINE_COLORS.late }} /> 마감 지남
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-6 rounded-[3px]" style={{ background: TIMELINE_COLORS.bars[0] }} /> 기간 항목
-            </span>
-          </div>
-          <Button id="tut-timeline-history" size="sm" variant="outline" onClick={() => setHistoryOpen(true)}>
-            <History /> 수정 이력 {history.length > 0 ? history.length : ''}
-          </Button>
-        </div>
+        <TimelineToolbar
+          historyCount={history.length}
+          onZoomIn={() => zoomBy(1 / 1.6)}
+          onZoomOut={() => zoomBy(1.6)}
+          onReset={reset}
+          onToday={() => focus(nowMs)}
+          onOpenHistory={() => setHistoryOpen(true)}
+        />
       </CardHeader>
 
       <CardContent className="overflow-x-auto">
         <p className="text-muted-foreground mb-2 text-xs">
-          막대를 끌면 기간이 옮겨지고, 양 끝을 끌면 30분 단위로 조절됩니다. 제목을 누르면 이름을 바꿀 수 있어요.
+          막대를 끌면 기간이 옮겨지고, 양 끝을 끌면 눈금 단위로 조절됩니다. 위아래로 끌어 다른 막대에 놓으면 그 하위
+          항목이 되고, 빈 곳에 놓으면 최상위로 빠집니다. 배경을 끌면 좌우로, ⌘/Ctrl+휠은 확대·축소입니다.
         </p>
-        <TimelineChart
-          svgRef={svgRef}
-          bars={bars}
-          deadlineGroups={deadlineGroups}
-          ticks={ticks}
-          startMs={startMs}
-          endMs={endMs}
-          nowMs={nowMs}
-          archived={Boolean(team.archived)}
-          drag={drag}
-          onBarPointerDown={beginDrag}
-          onTitleClick={openEdit}
-          onBubble={setBubble}
-        />
+        <svg
+          id="tut-timeline-chart"
+          ref={svgRef}
+          viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+          className="min-w-[760px] touch-none select-none"
+          role="img"
+          aria-label="타임라인"
+        >
+          <rect
+            x={0}
+            y={0}
+            width={VIEW_WIDTH}
+            height={height}
+            fill="transparent"
+            className={pan ? 'cursor-grabbing' : 'cursor-grab'}
+            onPointerDown={(event) => setPan({ pointerX: event.clientX, startMs: view.startMs, endMs: view.endMs })}
+          />
+
+          <TimelineAxis
+            ticks={ticks}
+            markers={markers}
+            markerRows={markerRows}
+            height={height}
+            nowMs={nowMs}
+            x={x}
+            inView={(ms) => ms >= view.startMs && ms <= view.endMs}
+            onBubble={setBubble}
+          />
+
+          <TimelineChart
+            rows={rows.map((row) => ({ ...row, item: row.item.task }))}
+            chartTop={chartTop}
+            height={height}
+            archived={Boolean(team.archived)}
+            drag={drag}
+            x={x}
+            onBarPointerDown={beginDrag}
+            onTitleClick={openEdit}
+          />
+        </svg>
       </CardContent>
 
       {bubble ? (

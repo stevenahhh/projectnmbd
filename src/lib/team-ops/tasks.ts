@@ -100,3 +100,27 @@ export async function updateMilestone(
     mutations: [{ kind: 'update', ref: doc(db, 'teams', teamId, 'tasks', task.id), data }],
   });
 }
+
+/** 타임라인에서 세로로 끌어 다른 항목 밑에 넣거나 최상위로 뺀다. 순환 방지는 호출 전에 끝난다. */
+export async function reparentMilestone(
+  teamId: string,
+  uid: string,
+  task: TeamTask,
+  parent: { id: string; title: string } | null,
+): Promise<void> {
+  const db = getDb();
+  await writeEvent(db, {
+    teamId,
+    actorUid: uid,
+    type: 'milestone.update',
+    payload: {
+      taskId: task.id,
+      title: task.title,
+      parentId: parent?.id ?? null,
+      parentTitle: parent?.title ?? null,
+    },
+    mutations: [
+      { kind: 'update', ref: doc(db, 'teams', teamId, 'tasks', task.id), data: { milestoneId: parent?.id ?? null } },
+    ],
+  });
+}
