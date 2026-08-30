@@ -9,8 +9,6 @@ import { useTimelineView } from '@/hooks/use-timeline-view';
 import { updateMilestone } from '@/lib/team-ops';
 import { toDate } from '@/lib/time';
 import {
-  CHART_LEFT,
-  CHART_WIDTH,
   DAY_MS,
   VIEW_WIDTH,
   snapStepFor,
@@ -60,10 +58,7 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
 
   const { view, setView, zoomBy, pxToMs, reset, focus } = useTimelineView(bounds, svgRef);
   const rangeMs = Math.max(1, view.endMs - view.startMs);
-  const x = useCallback(
-    (ms: number) => CHART_LEFT + ((ms - view.startMs) / rangeMs) * CHART_WIDTH,
-    [view.startMs, rangeMs],
-  );
+  const x = useCallback((ms: number) => ((ms - view.startMs) / rangeMs) * VIEW_WIDTH, [view.startMs, rangeMs]);
   const { rows, ticks, dayLines, markers, markerRows, showMarkerLabel, chartTop, height } = useTimelineLayout(
     tasks,
     view,
@@ -85,7 +80,7 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
     rows,
     view,
     pxToMs,
-    snapStep: snapStepFor(rangeMs, CHART_WIDTH),
+    snapStep: snapStepFor(rangeMs, VIEW_WIDTH),
     chartTop,
     height,
     svgRef,
@@ -165,12 +160,6 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
           role="img"
           aria-label="타임라인"
         >
-          <defs>
-            <clipPath id="timeline-chart-clip">
-              <rect x={CHART_LEFT} y={0} width={CHART_WIDTH} height={height} />
-            </clipPath>
-          </defs>
-
           <rect
             x={0}
             y={0}
@@ -181,9 +170,7 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
             onPointerDown={(event) => setPan({ pointerX: event.clientX, startMs: view.startMs, endMs: view.endMs })}
           />
 
-          <line x1={CHART_LEFT} y1={0} x2={CHART_LEFT} y2={height} stroke="currentColor" className="text-border" />
-
-          <g clipPath="url(#timeline-chart-clip)">
+          <g>
             <TimelineAxis
               ticks={ticks}
             dayLines={dayLines}
@@ -200,7 +187,6 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
 
           <TimelineChart
             rows={rows.map((row) => ({ ...row, item: row.item.task }))}
-            clipId="timeline-chart-clip"
             chartTop={chartTop}
             height={height}
             archived={Boolean(team.archived)}

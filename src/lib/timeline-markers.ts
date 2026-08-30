@@ -2,17 +2,17 @@
  * 위쪽 축의 마감 점 — 묶기와 겹침 회피.
  * 좌표 계산과 분리해 둔다. 점이 몇 줄까지 쌓이는지가 화면 밀도를 좌우한다.
  */
-import { DAY_MS, niceStep, startOfDayMs } from './timeline';
+import { DAY_MS, FONT, SCALE, niceStep, startOfDayMs } from './timeline';
 
-export const MARKER_RADIUS = 6;
+export const MARKER_RADIUS = Math.round(6 * SCALE);
 /** 점이 이만큼 벌어져야 'N개' 라벨을 띄운다. 좁으면 점만 찍는다. */
-export const MARKER_LABEL_MIN_PX = 40;
+export const MARKER_LABEL_MIN_PX = Math.round(40 * SCALE);
 /** 점이 쌓일 수 있는 최대 줄. 넘치면 왼쪽 점에 합산해 개수를 잃지 않는다. */
 export const MARKER_MAX_ROWS = 2;
 
 /** 점 하나가 라벨까지 포함해 차지하는 가로폭 — 겹침 판정에 쓰는 가상 박스의 너비. */
 export function markerLabelWidth(count: number): number {
-  return 8 + `${count}개`.length * 8;
+  return 8 + `${count}개`.length * FONT.marker;
 }
 
 /** 한 버킷이 차지하는 폭이 라벨을 담을 만한지. */

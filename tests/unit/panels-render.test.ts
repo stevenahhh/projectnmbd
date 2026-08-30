@@ -131,11 +131,8 @@ describe('새 화면 렌더 스모크', () => {
     expect(html).toContain('└');
     // 같은 날 마감 둘은 점 하나로 묶이고, 라벨 자리가 없으면 개수가 점 안에 들어간다
     expect(html).toMatch(/>2<\/text>/);
-    // 제목은 거터(x=12~)에, 막대는 차트 영역(x>=160)에 그려진다
-    expect(html).toMatch(/<text x="12"/);
-    const barX = [...html.matchAll(/<rect x="([\d.]+)"[^>]*rx="5"/g)].map((match) => Number(match[1]));
-    expect(barX.length).toBeGreaterThan(0);
-    expect(Math.min(...barX)).toBeGreaterThanOrEqual(160);
+    // 제목은 막대 안에 흰 글씨로 들어간다
+    expect(html).toMatch(/fill="#ffffff"[^>]*>모델 학습/);
   });
 
   it('완료된 마감은 기본으로 타임라인에서 빠진다', () => {

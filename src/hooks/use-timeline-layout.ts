@@ -3,8 +3,6 @@
 import { useMemo } from 'react';
 import {
   AXIS_HEIGHT,
-  CHART_LEFT,
-  CHART_WIDTH,
   MARKER_ROW_HEIGHT,
   ROW_PITCH,
   VIEW_WIDTH,
@@ -46,15 +44,15 @@ export function useTimelineLayout(tasks: TeamTask[], view: ViewRange, showDone: 
   }, [tasks]);
 
   const ticks = useMemo(
-    () => generateTicks(view.startMs, view.endMs, niceStep(rangeMs, CHART_WIDTH, 78)),
+    () => generateTicks(view.startMs, view.endMs, niceStep(rangeMs, VIEW_WIDTH, 78)),
     [view.startMs, view.endMs, rangeMs],
   );
 
-  const dayLines = useMemo(() => dayBoundaries(view.startMs, view.endMs, CHART_WIDTH), [view.startMs, view.endMs]);
+  const dayLines = useMemo(() => dayBoundaries(view.startMs, view.endMs, VIEW_WIDTH), [view.startMs, view.endMs]);
 
   const { markers, markerRows, showMarkerLabel } = useMemo(() => {
-    const bucketMs = deadlineBucketMs(rangeMs, CHART_WIDTH);
-    const showLabel = markerLabelShown(rangeMs, bucketMs, CHART_WIDTH);
+    const bucketMs = deadlineBucketMs(rangeMs, VIEW_WIDTH);
+    const showLabel = markerLabelShown(rangeMs, bucketMs, VIEW_WIDTH);
     const groups = groupDeadlines(
       tasks
         .filter((task) => !task.milestoneStartAt && (showDone || task.status !== 'done'))
@@ -63,7 +61,7 @@ export function useTimelineLayout(tasks: TeamTask[], view: ViewRange, showDone: 
     ).filter((group) => group.ms >= view.startMs - bucketMs && group.ms <= view.endMs + bucketMs);
     const packed = packMarkers<TeamTask>(
       groups,
-      (ms) => CHART_LEFT + ((ms - view.startMs) / rangeMs) * CHART_WIDTH,
+      (ms) => ((ms - view.startMs) / rangeMs) * VIEW_WIDTH,
       VIEW_WIDTH,
       { showLabel, maxRows: showDone ? MARKER_MAX_ROWS : 1 },
     );

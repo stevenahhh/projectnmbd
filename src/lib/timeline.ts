@@ -13,42 +13,50 @@ export const DAY_MS = 24 * HOUR_MS;
 export const SNAP_MS = 30 * MINUTE_MS;
 
 export const VIEW_WIDTH = 960;
-/** 왼쪽 이름 거터 — 막대 안에 제목을 넣으면 짧은 막대가 자기 이름을 자른다. */
-export const GUTTER_WIDTH = 160;
-export const CHART_LEFT = GUTTER_WIDTH;
-export const CHART_WIDTH = VIEW_WIDTH - GUTTER_WIDTH;
-export const AXIS_HEIGHT = 40;
-export const MARKER_ROW_HEIGHT = 18;
-export const BAR_HEIGHT = 22;
-export const ROW_GAP = 10;
+/** 세로 치수와 글자는 한 배율로 함께 키운다 — 따로 만지면 비례가 깨진다. */
+export const SCALE = 1.25;
+export const AXIS_HEIGHT = Math.round(40 * SCALE);
+export const MARKER_ROW_HEIGHT = Math.round(18 * SCALE);
+export const BAR_HEIGHT = Math.round(22 * SCALE);
+export const ROW_GAP = Math.round(10 * SCALE);
 export const ROW_PITCH = BAR_HEIGHT + ROW_GAP;
-export const HANDLE_PX = 10;
-export const INDENT_PX = 16;
+export const HANDLE_PX = Math.round(10 * SCALE);
+export const INDENT_PX = Math.round(16 * SCALE);
 
-/** 거터에 들어갈 제목의 최대 폭. 넘치면 말줄임한다. */
-export function gutterTextWidth(depth: number): number {
-  return GUTTER_WIDTH - 16 - depth * INDENT_PX;
+export const FONT = {
+  tick: Math.round(10 * SCALE),
+  marker: Math.round(11 * SCALE),
+  markerCount: Math.round(9 * SCALE),
+  bar: Math.round(11 * SCALE),
+};
+
+/** 대략적인 글자 폭 — 한글은 글자 크기만큼, 라틴·숫자는 그 절반쯤 차지한다. */
+export function estimateTextPx(text: string, fontSizePx: number): number {
+  return [...text].reduce((sum, ch) => sum + (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(ch) ? fontSizePx : fontSizePx * 0.55), 0);
 }
 
-/** 11px 기준 대략적인 글자 폭 — 한글은 넓고 라틴·숫자는 좁다. */
-export function estimateTextPx(text: string): number {
-  return [...text].reduce((sum, ch) => sum + (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(ch) ? 11 : 6), 0);
-}
-
-/** 거터 폭에 맞게 잘라 말줄임한다. */
-export function truncateToWidth(text: string, maxPx: number): string {
-  if (estimateTextPx(text) <= maxPx) return text;
-  const chars = [...text];
-  const budget = maxPx - estimateTextPx('…');
+/** 주어진 폭에 맞게 잘라 말줄임한다. 한 글자도 못 넣으면 빈 문자열이다. */
+export function truncateToWidth(text: string, maxPx: number, fontSizePx: number): string {
+  if (estimateTextPx(text, fontSizePx) <= maxPx) return text;
+  const budget = maxPx - estimateTextPx('…', fontSizePx);
   const kept: string[] = [];
   let used = 0;
-  for (const ch of chars) {
-    const next = used + estimateTextPx(ch);
+  for (const ch of [...text]) {
+    const next = used + estimateTextPx(ch, fontSizePx);
     if (next > budget) break;
     kept.push(ch);
     used = next;
   }
-  return `${kept.join('')}…`;
+  return kept.length === 0 ? '' : `${kept.join('')}…`;
+}
+
+/**
+ * 막대 안에 넣을 제목 — 주어진 폭에 맞춰 줄인다.
+ * 두 글자도 못 남기면 비운다. 「└ …」 같은 껍데기만 남기느니 안 그리는 편이 낫다.
+ */
+export function barLabelText(title: string, availablePx: number, fontSizePx: number): string {
+  const text = truncateToWidth(title, availablePx, fontSizePx);
+  return [...text].length >= 2 ? text : '';
 }
 
 export const TIMELINE_COLORS = {

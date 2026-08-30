@@ -12,9 +12,9 @@ import {
   HOUR_MS,
   SNAP_MS,
   dragRange,
+  barLabelText,
   estimateTextPx,
   generateTicks,
-  gutterTextWidth,
   niceStep,
   snapStepFor,
   snapToHalfHour,
@@ -109,7 +109,7 @@ describe('타임라인 좌표·시간 계산', () => {
     });
 
     it('충분히 떨어져 있으면 같은 줄에 남는다', () => {
-      const packed = packMarkers([group(10), group(60)], identity, 100, { maxRows: 2 });
+      const packed = packMarkers([group(10), group(140)], identity, 300, { maxRows: 2 });
       expect(packed.markers.map((marker) => marker.row)).toEqual([0, 0]);
       expect(packed.rows).toBe(1);
     });
@@ -180,21 +180,23 @@ describe('타임라인 좌표·시간 계산', () => {
     });
   });
 
-  describe('거터 제목', () => {
-    it('한글은 넓게, 라틴·숫자는 좁게 센다', () => {
-      expect(estimateTextPx('가나')).toBe(22);
-      expect(estimateTextPx('ab12')).toBe(24);
+  describe('막대 제목', () => {
+    it('한글은 글자 크기만큼, 라틴·숫자는 그 절반쯤 센다', () => {
+      expect(estimateTextPx('가나', 12)).toBe(24);
+      expect(estimateTextPx('ab12', 12)).toBeCloseTo(26.4);
     });
 
     it('폭을 넘으면 말줄임하고, 들어가면 그대로 둔다', () => {
-      expect(truncateToWidth('데이터 수집', 200)).toBe('데이터 수집');
-      const cut = truncateToWidth('아주 긴 마일스톤 제목입니다', 40);
+      expect(truncateToWidth('데이터 수집', 200, 12)).toBe('데이터 수집');
+      const cut = truncateToWidth('아주 긴 마일스톤 제목입니다', 60, 12);
       expect(cut.endsWith('…')).toBe(true);
-      expect(estimateTextPx(cut)).toBeLessThanOrEqual(40);
+      expect(estimateTextPx(cut, 12)).toBeLessThanOrEqual(60);
     });
 
-    it('깊이가 깊을수록 제목에 쓸 폭이 줄어든다', () => {
-      expect(gutterTextWidth(1)).toBeLessThan(gutterTextWidth(0));
+    it('막대가 너무 좁으면 제목을 비운다 — 껍데기만 남기지 않는다', () => {
+      expect(barLabelText('데이터 수집', 200, 12)).toBe('데이터 수집');
+      expect(barLabelText('데이터 수집', 40, 12)).toBe('데이…');
+      expect(barLabelText('데이터 수집', 14, 12)).toBe('');
     });
   });
 

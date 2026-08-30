@@ -1,6 +1,6 @@
 'use client';
 
-import { MARKER_ROW_HEIGHT, TIMELINE_COLORS, type Bubble, type Tick } from '@/lib/timeline';
+import { FONT, MARKER_ROW_HEIGHT, TIMELINE_COLORS, type Bubble, type Tick } from '@/lib/timeline';
 import { MARKER_RADIUS, type PackedMarker } from '@/lib/timeline-markers';
 import type { TeamTask } from '@/lib/types';
 
@@ -39,7 +39,7 @@ export function TimelineAxis({
   inView,
   onBubble,
 }: TimelineAxisProps) {
-  const markerTop = 14;
+  const markerTop = 18;
   const axisBottom = markerTop + markerRows * MARKER_ROW_HEIGHT;
 
   return (
@@ -72,8 +72,8 @@ export function TimelineAxis({
           />
           <text
             x={x(tick.ms) + 4}
-            y={11}
-            fontSize={10}
+            y={FONT.tick + 2}
+            fontSize={FONT.tick}
             fill="currentColor"
             className="text-muted-foreground"
             fontWeight={tick.major ? 600 : 400}
@@ -134,7 +134,7 @@ export function TimelineAxis({
             ) : null}
             <circle cx={cx} cy={cy} r={radius} fill={color} />
             {items.length > 1 && !showMarkerLabel ? (
-              <text x={cx} y={cy + 3} fontSize={9} fontWeight={700} textAnchor="middle" fill="#ffffff">
+              <text x={cx} y={cy + 4} fontSize={FONT.markerCount} fontWeight={700} textAnchor="middle" fill="#ffffff">
                 {items.length > 9 ? '+' : items.length}
               </text>
             ) : null}
@@ -142,7 +142,7 @@ export function TimelineAxis({
               <text
                 x={flip ? cx - radius - 4 : cx + radius + 4}
                 y={cy + 4}
-                fontSize={11}
+                fontSize={FONT.marker}
                 textAnchor={flip ? 'end' : 'start'}
                 fill="currentColor"
                 className="text-muted-foreground"

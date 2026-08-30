@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
-import { CHART_LEFT, CHART_WIDTH, HOUR_MS, VIEW_WIDTH, panRange, zoomRange, type ViewRange } from '@/lib/timeline';
+import { HOUR_MS, VIEW_WIDTH, panRange, zoomRange, type ViewRange } from '@/lib/timeline';
 
 const MIN_RANGE_MS = 3 * HOUR_MS;
 
@@ -27,8 +27,7 @@ export function useTimelineView(bounds: ViewRange, svgRef: RefObject<SVGSVGEleme
     (clientX: number, current: ViewRange): number => {
       const rect = svgRef.current?.getBoundingClientRect();
       if (!rect || rect.width === 0) return (current.startMs + current.endMs) / 2;
-      const unit = ((clientX - rect.left) / rect.width) * VIEW_WIDTH;
-      const ratio = Math.min(1, Math.max(0, (unit - CHART_LEFT) / CHART_WIDTH));
+      const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
       return current.startMs + (current.endMs - current.startMs) * ratio;
     },
     [svgRef],
@@ -54,7 +53,7 @@ export function useTimelineView(bounds: ViewRange, svgRef: RefObject<SVGSVGEleme
     (dxClient: number, current: ViewRange): number => {
       const rect = svgRef.current?.getBoundingClientRect();
       const scale = rect && rect.width > 0 ? VIEW_WIDTH / rect.width : 1;
-      return (dxClient * scale * (current.endMs - current.startMs)) / CHART_WIDTH;
+      return (dxClient * scale * (current.endMs - current.startMs)) / VIEW_WIDTH;
     },
     [svgRef],
   );
