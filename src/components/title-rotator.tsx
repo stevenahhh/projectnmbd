@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 /** 탭 제목 뒤에 붙는 말. 한 번에 하나만 보이고 천천히 돌아간다. */
 export const TITLE_LINES = ['버스 기사 없는 팀플', '교수님 학점은 이렇게', '좋은 사람들과 좋은 과제'];
 
-const ROTATE_MS = 6000;
+const ROTATE_MS = 3000;
 
 /**
  * 탭 제목을 「Dibs — …」로 갈아 끼운다.

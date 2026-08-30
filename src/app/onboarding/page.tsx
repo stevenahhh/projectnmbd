@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Wordmark } from '@/components/wordmark';
+import { PhraseRoller } from '@/components/phrase-roller';
 
 const SELLING_POINTS = [
   { title: '한 곳에 모으기', desc: '문서·자료·할 일·대화·회의록을 팀 공간 하나에' },
@@ -65,11 +66,14 @@ export default function OnboardingPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-5 px-6 py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold">
-          <Wordmark className="text-xl" />에 오신 걸 환영해요
-        </h1>
-        <Button asChild variant="ghost" size="sm"><Link href="/">처음으로</Link></Button>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <h1>
+            <Wordmark className="text-3xl" />
+          </h1>
+          <Button asChild variant="ghost" size="sm"><Link href="/">처음으로</Link></Button>
+        </div>
+        <PhraseRoller />
       </div>
       <Card>
         <CardHeader>

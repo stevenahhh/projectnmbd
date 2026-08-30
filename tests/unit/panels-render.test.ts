@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import type { Timestamp } from 'firebase/firestore';
 import { ContributionPie } from '@/components/team/contribution-pie';
 import { GanttPanel } from '@/components/team/gantt-panel';
+import { PhraseRoller } from '@/components/phrase-roller';
 import { LogsPanel } from '@/components/team/logs-panel';
 import type { MemberContribution } from '@/lib/contribution';
 import { DEFAULT_WEIGHTS, type LedgerEvent, type Team, type TeamTask } from '@/lib/types';
@@ -165,5 +166,17 @@ describe('새 화면 렌더 스모크', () => {
   it('기록이 없으면 로그도 빈 상태를 알린다', () => {
     const html = renderToStaticMarkup(createElement(LogsPanel, { team: TEAM, events: [] }));
     expect(html).toContain('해당하는 기록이 없어요');
+  });
+});
+
+describe('캐치프레이즈 굴림', () => {
+  it('모든 문구를 한 칸에 겹쳐 두고 하나만 보인다', () => {
+    const html = renderToStaticMarkup(createElement(PhraseRoller, {}));
+    // 겹쳐 둔 칸이 가장 긴 문구로 너비를 잡아야 뒷말이 흔들리지 않는다
+    const stacked = html.match(/col-start-1 row-start-1/g) ?? [];
+    expect(stacked.length).toBeGreaterThan(1);
+    expect((html.match(/opacity-100/g) ?? [])).toHaveLength(1);
+    // 강조는 정확히 한 줄에만
+    expect((html.match(/phrase-shine/g) ?? [])).toHaveLength(1);
   });
 });

@@ -218,3 +218,20 @@
   letter-spacing: 0.01em;
   font-feature-settings: normal;
 }
+
+/* 캐치프레이즈의 마지막 문구 — 색이 천천히 흐른다 */
+@keyframes phrase-shine {
+  from { background-position: 0% 50%; }
+  to { background-position: 220% 50%; }
+}
+.phrase-shine {
+  background-image: linear-gradient(100deg, #4b5bd6 0%, #7c5cd6 28%, #2f8fbf 52%, #3f9e78 74%, #4b5bd6 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: phrase-shine 2.6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .phrase-shine { animation: none; }
+}
