@@ -122,7 +122,7 @@ export function LogsPanel({ team, events }: LogsPanelProps) {
       </Card>
 
       <Card id="tut-log-list">
-        <CardContent className="flex flex-col gap-5 pt-6">
+        <CardContent className="selectable flex flex-col gap-5 pt-6">
           {groups.map(([day, dayEvents]) => (
             <section key={day} className="flex flex-col gap-1.5">
               <div className="flex items-center gap-3">

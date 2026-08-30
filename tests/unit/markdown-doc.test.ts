@@ -67,6 +67,48 @@ describe('마크다운 ↔ 편집기 문서', () => {
     });
   });
 
+  describe('표', () => {
+    const source = ['| 축 | 가중치 |', '| --- | --- |', '| 문서 | 1 |', '| 회의 | 2 |'].join('\n');
+
+    it('구분선이 있는 파이프 표를 표로 읽는다', () => {
+      const block = parseMarkdown(source)[0];
+      expect(block).toEqual({ kind: 'table', header: ['축', '가중치'], rows: [['문서', '1'], ['회의', '2']] });
+    });
+
+    it('구분선이 없으면 표가 아니라 그냥 글이다', () => {
+      expect(parseMarkdown('| 축 | 가중치 |')[0].kind).toBe('p');
+    });
+
+    it('편집기로 펼 때 표 태그가 된다', () => {
+      const html = markdownToHtml(source);
+      expect(html).toContain('<table>');
+      expect(html).toContain('<th><p>축</p></th>');
+      expect(html).toContain('<td><p>문서</p></td>');
+    });
+
+    it('저장할 때 파이프 표로 되돌아온다', () => {
+      const cell = (value: string, header = false): DocNode => ({
+        type: header ? 'tableHeader' : 'tableCell',
+        content: [{ type: 'paragraph', content: [text(value)] }],
+      });
+      const doc: DocNode = {
+        type: 'doc',
+        content: [
+          {
+            type: 'table',
+            content: [
+              { type: 'tableRow', content: [cell('축', true), cell('가중치', true)] },
+              { type: 'tableRow', content: [cell('문서'), cell('1')] },
+              { type: 'tableRow', content: [cell('회의'), cell('2')] },
+            ],
+          },
+        ],
+      };
+      expect(docToMarkdown(doc)).toBe(source);
+      expect(parseMarkdown(docToMarkdown(doc))).toEqual(parseMarkdown(source));
+    });
+  });
+
   it('회의록 한 편이 편집기를 거쳐도 형식이 유지된다', () => {
     const original = '## 논의\n- 전처리 시연\n\n## 결정\n- KST 로 통일';
     // 편집기가 만들 문서와 같은 모양을 손으로 세워 되돌린다

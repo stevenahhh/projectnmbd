@@ -83,27 +83,39 @@ export function useMeetingSummary() {
   const [status, setStatus] = useState<SummaryStatus>('idle');
   const [source, setSource] = useState<string | null>(null);
 
+  /** 서버가 느려 한 번 실패하는 일이 있다 — 사용자가 다시 누르기 전에 우리가 한 번 더 해본다. */
+  const attempt = async (title: string, body: string) => {
+    const idToken = await getFirebaseAuth().currentUser?.getIdToken();
+    const response = await fetch('/api/summarize-meeting', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${idToken ?? ''}` },
+      body: JSON.stringify({ title, body }),
+    });
+    const data = (await response.json()) as { lines?: string[]; error?: string };
+    return { ok: response.ok && Boolean(data.lines), retryable: response.status >= 500, data };
+  };
+
   const generate = async (title: string, body: string) => {
     setStatus('running');
-    try {
-      const idToken = await getFirebaseAuth().currentUser?.getIdToken();
-      const response = await fetch('/api/summarize-meeting', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', authorization: `Bearer ${idToken ?? ''}` },
-        body: JSON.stringify({ title, body }),
-      });
-      const data = (await response.json()) as { lines?: string[]; error?: string };
-      if (!response.ok || !data.lines) {
+    for (const isLast of [false, true]) {
+      try {
+        const { ok, retryable, data } = await attempt(title, body);
+        if (ok && data.lines) {
+          setLines([data.lines[0] ?? '', data.lines[1] ?? '', data.lines[2] ?? '']);
+          setSource(body.trim());
+          setStatus('ready');
+          return;
+        }
+        if (!isLast && retryable) continue;
         setStatus('failed');
         toast.error(data.error ?? '요약하지 못했어요');
         return;
+      } catch {
+        if (!isLast) continue;
+        setStatus('failed');
+        toast.error('요약하지 못했어요 — 연결을 확인해주세요');
+        return;
       }
-      setLines([data.lines[0] ?? '', data.lines[1] ?? '', data.lines[2] ?? '']);
-      setSource(body.trim());
-      setStatus('ready');
-    } catch {
-      setStatus('failed');
-      toast.error('요약하지 못했어요 — 연결을 확인해주세요');
     }
   };
 

@@ -213,7 +213,9 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
           <p className="text-muted-foreground text-xs">
             {preview ? `${team.members[preview.actorUid]?.nickname ?? '알 수 없음'} · ${formatKST(preview.at)}` : ''}
           </p>
-          <pre className="bg-muted max-h-[55vh] overflow-auto rounded-md p-3 text-xs whitespace-pre-wrap">{preview?.body}</pre>
+          <pre className="bg-muted selectable max-h-[55vh] overflow-auto rounded-md p-3 text-xs whitespace-pre-wrap">
+            {preview?.body}
+          </pre>
           {preview && !lockedByOther ? (
             <Button
               variant="outline"

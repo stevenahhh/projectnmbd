@@ -102,7 +102,7 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
             </DialogTitle>
           </DialogHeader>
           {reading ? (
-            <article className="flex flex-col gap-5">
+            <article className="selectable flex flex-col gap-5">
               <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 rounded-lg border p-4 text-sm">
                 <dt className="text-muted-foreground">일시</dt>
                 <dd>

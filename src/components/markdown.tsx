@@ -59,6 +59,34 @@ export function Markdown({ text, className }: { text: string; className?: string
             </ol>
           );
         }
+        if (block.kind === 'table') {
+          return (
+            <div key={index} className="overflow-x-auto">
+              <table className="w-full border-collapse text-[0.95em]">
+                <thead>
+                  <tr>
+                    {block.header.map((cell, cellIndex) => (
+                      <th key={cellIndex} className="bg-muted border px-2.5 py-1.5 text-left font-semibold">
+                        {inline(cell)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {block.rows.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {row.map((cell, cellIndex) => (
+                        <td key={cellIndex} className="border px-2.5 py-1.5 align-top">
+                          {inline(cell)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
         if (block.kind === 'quote') {
           return (
             <blockquote key={index} className="text-muted-foreground border-l-2 pl-3">

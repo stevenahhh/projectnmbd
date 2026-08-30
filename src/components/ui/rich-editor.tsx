@@ -4,7 +4,8 @@ import { useEffect, useRef } from 'react';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Placeholder } from '@tiptap/extensions';
-import { Bold, Code, Heading1, Heading2, List, ListOrdered, Quote } from 'lucide-react';
+import { TableKit } from '@tiptap/extension-table';
+import { Bold, Code, Heading1, Heading2, List, ListOrdered, Quote, Table } from 'lucide-react';
 import { docToMarkdown, markdownToHtml } from '@/lib/markdown-doc';
 
 interface RichEditorProps {
@@ -99,6 +100,13 @@ function Toolbar({ editor }: { editor: Editor }) {
         active={editor.isActive('code')}
         onClick={() => editor.chain().focus().toggleCode().run()}
       />
+      <Tool
+        editor={editor}
+        icon={Table}
+        label="표"
+        active={editor.isActive('table')}
+        onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+      />
       <span className="text-muted-foreground ml-auto pr-1 text-[11px]">
         <code className="bg-background rounded px-1"># </code> · <code className="bg-background rounded px-1">- </code>{' '}
         로도 됩니다
@@ -121,6 +129,8 @@ export function RichEditor({ value, onChange, placeholder, className, ariaLabel,
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3] }, link: false, horizontalRule: false }),
+      // 열 너비 조절은 끈다 — 저장 형식이 마크다운이라 너비를 담을 자리가 없다
+      TableKit.configure({ table: { resizable: false } }),
       Placeholder.configure({ placeholder: placeholder ?? '' }),
     ],
     content: markdownToHtml(value),

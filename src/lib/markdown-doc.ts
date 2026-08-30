@@ -10,13 +10,34 @@ export type Block =
   | { kind: 'ul'; items: string[] }
   | { kind: 'ol'; items: string[] }
   | { kind: 'quote'; lines: string[] }
+  | { kind: 'table'; header: string[]; rows: string[][] }
   | { kind: 'p'; lines: string[] };
 
-/** 제목(#~###) · 목록(-, 1.) · 인용(>) · 문단만 다룬다. */
+/** | a | b | 꼴의 한 줄. */
+function isTableRow(line: string): boolean {
+  return /^\s*\|.*\|\s*$/.test(line);
+}
+
+/** | --- | :--: | 꼴의 구분선. 이 줄이 있어야 표로 본다. */
+function isTableDivider(line: string): boolean {
+  return /^\s*\|[\s:|-]+\|\s*$/.test(line) && line.includes('-');
+}
+
+function tableCells(line: string): string[] {
+  return line
+    .trim()
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((cell) => cell.trim());
+}
+
+/** 제목(#~###) · 목록(-, 1.) · 인용(>) · 표(|) · 문단을 다룬다. */
 export function parseMarkdown(source: string): Block[] {
   const blocks: Block[] = [];
-  for (const rawLine of source.split('\n')) {
-    const line = rawLine.trimEnd();
+  const lines = source.split('\n');
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trimEnd();
     const heading = /^(#{1,3})\s+(.*)$/.exec(line);
     const bullet = /^\s*[-*]\s+(.*)$/.exec(line);
     const ordered = /^\s*(\d+)[.)]\s+(.*)$/.exec(line);
@@ -44,6 +65,19 @@ export function parseMarkdown(source: string): Block[] {
     if (quote) {
       if (last?.kind === 'quote') last.lines.push(quote[1]);
       else blocks.push({ kind: 'quote', lines: [quote[1]] });
+      continue;
+    }
+    // 표는 다음 줄까지 봐야 판단이 선다 — 구분선이 뒤따를 때만 표다
+    if (isTableRow(line) && isTableDivider(lines[index + 1] ?? '')) {
+      const header = tableCells(line);
+      const rows: string[][] = [];
+      let cursor = index + 2;
+      while (cursor < lines.length && isTableRow(lines[cursor])) {
+        rows.push(tableCells(lines[cursor]));
+        cursor += 1;
+      }
+      blocks.push({ kind: 'table', header, rows });
+      index = cursor - 1;
       continue;
     }
     if (last?.kind === 'p' && last.lines.length > 0) last.lines.push(line);
@@ -81,6 +115,13 @@ export function markdownToHtml(source: string): string {
       }
       if (block.kind === 'quote') {
         return `<blockquote>${block.lines.map((line) => `<p>${inlineHtml(line)}</p>`).join('')}</blockquote>`;
+      }
+      if (block.kind === 'table') {
+        const head = block.header.map((cell) => `<th><p>${inlineHtml(cell)}</p></th>`).join('');
+        const body = block.rows
+          .map((row) => `<tr>${row.map((cell) => `<td><p>${inlineHtml(cell)}</p></td>`).join('')}</tr>`)
+          .join('');
+        return `<table><tbody><tr>${head}</tr>${body}</tbody></table>`;
       }
       return `<p>${block.lines.map(inlineHtml).join('<br>')}</p>`;
     })
@@ -134,6 +175,15 @@ function blockMarkdown(node: DocNode): string {
         .flatMap((text) => text.split('\n'))
         .map((line) => `> ${line}`)
         .join('\n');
+    case 'table': {
+      const rows = (node.content ?? []).map((row) =>
+        (row.content ?? []).map((cell) => inlineMarkdown(cell.content?.[0]?.content).replaceAll('|', '\\|')),
+      );
+      if (rows.length === 0) return '';
+      const [header, ...rest] = rows;
+      const divider = header.map(() => '---');
+      return [header, divider, ...rest].map((row) => `| ${row.join(' | ')} |`).join('\n');
+    }
     case 'codeBlock':
       return `\`\`\`\n${inlineMarkdown(node.content)}\n\`\`\``;
     case 'horizontalRule':
