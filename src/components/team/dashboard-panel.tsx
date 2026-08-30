@@ -14,6 +14,7 @@ import {
   type AggregatableTask,
 } from '@/lib/contribution';
 import { formatKST } from '@/lib/time';
+import { ContributionPie } from './contribution-pie';
 import type { LedgerEvent, Team, TeamTask } from '@/lib/types';
 
 interface DashboardPanelProps {
@@ -172,45 +173,8 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="flex flex-col gap-5">
-            {result.members.map((member) => {
-              const info = team.members[member.uid];
-              return (
-                <div key={member.uid} className="flex flex-col gap-1.5">
-                  <div className="flex items-baseline justify-between text-sm">
-                    <span className="font-medium">
-                      {info.nickname}
-                      {info.roleLabel ? <span className="text-muted-foreground ml-2 text-xs">{info.roleLabel}</span> : null}
-                      {team.leaderUid === member.uid ? (
-                        <span className="bg-primary text-primary-foreground ml-2 rounded px-1.5 py-0.5 text-[10px]">팀장</span>
-                      ) : null}
-                    </span>
-                    <span className="tabular-nums">{member.percent.toFixed(0)}%</span>
-                  </div>
-                  <div className="bg-secondary h-3 w-full overflow-hidden rounded-full">
-                    <div
-                      className="bg-primary h-full rounded-full transition-all"
-                      style={{ width: `${Math.min(100, member.percent)}%` }}
-                    />
-                  </div>
-                  <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-0.5 text-xs">
-                    <span>문서 {member.raw.docChars.toLocaleString()}자</span>
-                    <span>
-                      자료 {member.raw.fileCount}건 + 첨삭 {member.raw.commentCount}건
-                    </span>
-                    <span>
-                      할 일 {member.raw.taskDone}/{member.raw.taskAssigned} (정시 {member.raw.taskOnTime})
-                    </span>
-                    <span>회의 {member.raw.meetingAttend}회</span>
-                    <span>활동 {member.raw.activeDays}일</span>
-                    {member.inactive ? (
-                      <span className="text-destructive font-medium">최근 {member.inactiveDays ?? '—'}일 활동 없음</span>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
-
+          <CardContent className="flex flex-col gap-4">
+            <ContributionPie team={team} members={result.members} />
             {result.concentrated ? (
               <p className="text-muted-foreground text-xs">최다 기여자 비중 {Math.round(result.topShare * 100)}%</p>
             ) : null}

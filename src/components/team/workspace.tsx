@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   ListTodo,
   MessagesSquare,
+  ScrollText,
   Users,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -28,12 +29,13 @@ import { DocsPanel } from './docs-panel';
 import { FilesPanel } from './files-panel';
 import { GanttPanel } from './gantt-panel';
 import { MembersPanel } from './members-panel';
+import { LogsPanel } from './logs-panel';
 import { Tutorial } from './tutorial';
 import { SettingsMenu } from './settings-menu';
 import { TeamSwitcher } from './team-switcher';
 import type { Team, TeamTask } from '@/lib/types';
 
-const TABS = ['dashboard', 'tasks', 'chat', 'meetings', 'docs', 'files', 'gantt', 'members'] as const;
+const TABS = ['dashboard', 'tasks', 'chat', 'meetings', 'docs', 'files', 'gantt', 'members', 'logs'] as const;
 export type WorkspaceTab = (typeof TABS)[number];
 
 const TAB_LABELS: Record<WorkspaceTab, string> = {
@@ -45,6 +47,7 @@ const TAB_LABELS: Record<WorkspaceTab, string> = {
   files: '자료',
   gantt: '타임라인',
   members: '멤버',
+  logs: '로그',
 };
 
 const TAB_ICONS: Record<WorkspaceTab, typeof LayoutDashboard> = {
@@ -56,6 +59,7 @@ const TAB_ICONS: Record<WorkspaceTab, typeof LayoutDashboard> = {
   files: FolderOpen,
   gantt: CalendarRange,
   members: Users,
+  logs: ScrollText,
 };
 
 /** 브라우저 Notification 권한은 접속 중 1회만 요청한다. */
@@ -116,7 +120,6 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
   }
 
   const team = data.team as Team;
-  const hasAiKey = Boolean(process.env.NEXT_PUBLIC_HAS_AI_KEY);
 
   const bell = (
     <Popover>
@@ -230,11 +233,12 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
           {tab === 'dashboard' ? <DashboardPanel team={team} events={data.events} tasks={data.tasks as TeamTask[]} /> : null}
           {tab === 'tasks' ? <TasksPanel team={team} tasks={data.tasks} uid={uid} /> : null}
           {tab === 'chat' ? <ChatPanel team={team} messages={data.messages} uid={uid} /> : null}
-          {tab === 'meetings' ? <MeetingsPanel team={team} meetings={data.meetings} uid={uid} hasAiKey={hasAiKey} /> : null}
+          {tab === 'meetings' ? <MeetingsPanel team={team} meetings={data.meetings} uid={uid} /> : null}
           {tab === 'docs' ? <DocsPanel team={team} docs={data.docs} uid={uid} /> : null}
           {tab === 'files' ? <FilesPanel team={team} files={data.files} uid={uid} teamSizeBytes={0} /> : null}
           {tab === 'gantt' ? <GanttPanel team={team} tasks={data.tasks} events={data.events} uid={uid} /> : null}
           {tab === 'members' ? <MembersPanel team={team} leaderRequests={data.leaderRequests} uid={uid} /> : null}
+          {tab === 'logs' ? <LogsPanel team={team} events={data.events} /> : null}
         </main>
       </div>
     </div>

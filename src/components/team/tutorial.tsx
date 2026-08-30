@@ -72,6 +72,16 @@ const TUTORIALS: Record<string, Step[]> = {
     { element: '#tut-timeline-legend', popover: { title: '색으로 읽기', description: '위쪽 축의 점이 마감입니다. 점에 올리면 무엇이 걸려 있는지 보여요' } },
     { element: '#tut-timeline-history', popover: { title: '수정 이력', description: '누가 언제 기간을 바꿨는지 전부 남습니다' } },
   ],
+  logs: [
+    {
+      element: '#tut-log-filter',
+      popover: { title: '활동 로그', description: '종류와 사람으로 걸러서 팀에서 있었던 일을 전부 볼 수 있어요' },
+    },
+    {
+      element: '#tut-log-list',
+      popover: { title: '시각 순 기록', description: '서버가 찍은 시각 그대로 날짜별로 묶어 보여줍니다' },
+    },
+  ],
   members: [
     { element: '#tut-member-list', popover: { title: '참여자', description: '역할을 붙여두면 할 일 담당이 분명해져요' } },
     { element: '#tut-member-leader', popover: { title: '팀 관리', description: '역할 배정·보관·삭제는 팀장만 할 수 있어요' } },

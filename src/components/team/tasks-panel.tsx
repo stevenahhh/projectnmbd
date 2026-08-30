@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { CheckCircle2, Circle, Plus } from 'lucide-react';
+import { Fragment, useMemo, useState } from 'react';
+import { CheckCircle2, ChevronDown, Circle, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { completeTask, createTask, reopenTask } from '@/lib/team-ops';
 import { formatKST, isOverdue } from '@/lib/time';
@@ -38,6 +39,7 @@ export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
   const [desc, setDesc] = useState('');
   const [assignee, setAssignee] = useState(uid);
   const [due, setDue] = useState('');
+  const [doneOpen, setDoneOpen] = useState(false);
   const [now] = useState(() => new Date());
 
   const { todo, done } = useMemo(() => {
@@ -76,7 +78,7 @@ export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
     const assigneeName = team.members[task.assigneeUid]?.nickname ?? '담당 없음';
     const completed = task.status === 'done';
     return (
-      <div key={task.id} className="hover:bg-muted/60 flex items-start gap-3 rounded-md px-3 py-3 transition-colors">
+      <div className="hover:bg-muted/60 flex items-start gap-3 rounded-md px-3 py-3 transition-colors">
         <button
           className="mt-0.5 cursor-pointer"
           aria-label={completed ? '완료 취소' : '완료로 표시'}
@@ -106,6 +108,14 @@ export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
       </div>
     );
   };
+
+  const rows = (list: TeamTask[]) =>
+    list.map((task, index) => (
+      <Fragment key={task.id}>
+        {index > 0 ? <Separator /> : null}
+        {row(task)}
+      </Fragment>
+    ));
 
   return (
     <div className="flex flex-col gap-4">
@@ -174,8 +184,8 @@ export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
         <CardHeader>
           <CardTitle className="text-base">진행 중</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col divide-y px-2">
-          {todo.map(row)}
+        <CardContent className="flex flex-col px-2">
+          {rows(todo)}
           {todo.length === 0 ? (
             <p className="text-muted-foreground py-8 text-center text-sm">진행 중인 할 일이 없어요</p>
           ) : null}
@@ -184,10 +194,17 @@ export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
 
       {done.length > 0 ? (
         <Card id="tut-task-done">
-          <CardHeader>
-            <CardTitle className="text-muted-foreground text-base">완료 {done.length}</CardTitle>
+          <CardHeader className="py-0">
+            <button
+              onClick={() => setDoneOpen((v) => !v)}
+              aria-expanded={doneOpen}
+              className="hover:bg-muted/60 -mx-2 flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-left transition-colors"
+            >
+              <ChevronDown className={`size-4 transition-transform ${doneOpen ? '' : '-rotate-90'}`} />
+              <CardTitle className="text-muted-foreground text-base">완료 {done.length}</CardTitle>
+            </button>
           </CardHeader>
-          <CardContent className="flex flex-col divide-y px-2">{done.map(row)}</CardContent>
+          {doneOpen ? <CardContent className="flex flex-col px-2">{rows(done)}</CardContent> : null}
         </Card>
       ) : null}
     </div>
