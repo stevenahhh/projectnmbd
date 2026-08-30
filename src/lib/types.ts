@@ -114,6 +114,9 @@ export interface Message {
   actorUid: string;
   text: string;
   at: Timestamp | null;
+  /** 5분 안에 고쳤다면, 고치기 전 텍스트가 여기 남는다. */
+  prevText?: string;
+  editedAt?: Timestamp | null;
 }
 
 export interface TeamDoc {

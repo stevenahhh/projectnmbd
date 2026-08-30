@@ -207,7 +207,15 @@ service cloud.firestore {
       match /messages/{messageId} {
         allow get, list: if member(teamId);
         allow create: if activeMember(teamId) && actorAndServerTime();
-        allow update, delete: if false;
+        // 보낸 지 5분 안, 본인만, text·prevText·editedAt 셋만 바꿀 수 있다.
+        // prevText 는 진짜였던 내용이어야 하고, 편집 시각은 서버 시각으로 찍힌다.
+        allow update: if activeMember(teamId)
+          && request.auth.uid == resource.data.actorUid
+          && request.time.toMillis() - resource.data.at.toMillis() <= 300000
+          && request.resource.data.get('editedAt') == request.time
+          && request.resource.data.get('prevText') == resource.data.get('text')
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'prevText', 'editedAt']);
+        allow delete: if false;
       }
 
       // ── 문서: 헤더는 update 가능, 버전은 create-only ────────
