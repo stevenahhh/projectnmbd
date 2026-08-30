@@ -22,8 +22,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   // 기본 닉네임이 채워져 있어 아무 글자나 쓰지 않아도 바로 시작할 수 있다
-  const defaultNickname = '새싹' + Math.floor(Math.random() * 90 + 10);
-  const [nickname, setNickname] = useState(profile?.nickname ?? defaultNickname);
+  const [nickname, setNickname] = useState(profile?.nickname ?? '새싹');
   const [skillTags, setSkillTags] = useState<string[]>(profile?.skillTags ?? []);
   const [customSkill, setCustomSkill] = useState('');
   const [github, setGithub] = useState(profile?.github ?? '');
@@ -65,7 +64,12 @@ export default function OnboardingPage() {
       <Card>
         <CardHeader>
           <CardTitle>{step === 0 ? '닉네임만 알려주세요' : step === 1 ? '역량 태그' : step === 2 ? '링크 (선택)' : '관심 과목 (선택)'}</CardTitle>
-          <CardDescription>단계 {step + 1} / 4 · 실명·학번은 받지 않아요</CardDescription>
+          <CardDescription>단계 {step + 1} / 4 · 모든 항목 선택 사항 · 실명·학번은 받지 않아요</CardDescription>
+          {step > 0 ? (
+            <button className="text-muted-foreground hover:text-foreground cursor-pointer self-start text-xs" onClick={() => void finish()}>
+              건너뛰고 바로 시작 →
+            </button>
+          ) : null}
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {step === 0 ? (
