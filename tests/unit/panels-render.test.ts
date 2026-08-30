@@ -84,6 +84,17 @@ describe('새 화면 렌더 스모크', () => {
     expect(html).toContain('실험 표');
   });
 
+  it('로그는 첫 묶음만 그리고 나머지는 스크롤로 이어붙인다', () => {
+    const many = Array.from({ length: 70 }, (_, index) =>
+      event(`e${index}`, 'file.upload', `2026-08-29T${String(index % 24).padStart(2, '0')}:00:00Z`),
+    );
+    const html = renderToStaticMarkup(createElement(LogsPanel, { team: TEAM, events: many }));
+    expect(html).toContain('활동 로그 70건');
+    expect(html.match(/실험 표/g) ?? []).toHaveLength(60);
+    expect(html).toContain('남은 10건');
+    expect(html).not.toContain('더 보기');
+  });
+
   it('기록이 없으면 로그도 빈 상태를 알린다', () => {
     const html = renderToStaticMarkup(createElement(LogsPanel, { team: TEAM, events: [] }));
     expect(html).toContain('해당하는 기록이 없어요');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,6 +52,23 @@ export function LogsPanel({ team, events }: LogsPanelProps) {
     }
     return [...byDay.entries()];
   }, [filtered, limit]);
+
+  const sentinel = useRef<HTMLDivElement>(null);
+  const hasMore = filtered.length > limit;
+
+  // 목록 끝이 시야에 들어오면 다음 묶음을 이어 붙인다 — 버튼을 누르러 갈 필요가 없다.
+  useEffect(() => {
+    const node = sentinel.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) setLimit((value) => value + PAGE);
+      },
+      { rootMargin: '320px' },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -133,10 +150,13 @@ export function LogsPanel({ team, events }: LogsPanelProps) {
             <p className="text-muted-foreground py-10 text-center text-sm">해당하는 기록이 없어요</p>
           ) : null}
 
-          {filtered.length > limit ? (
-            <Button variant="outline" className="self-center" onClick={() => setLimit((v) => v + PAGE)}>
-              {filtered.length - limit}건 더 보기
-            </Button>
+          {hasMore ? (
+            <div ref={sentinel} className="text-muted-foreground py-4 text-center text-xs">
+              남은 {filtered.length - limit}건 불러오는 중…
+            </div>
+          ) : null}
+          {!hasMore && filtered.length > PAGE ? (
+            <p className="text-muted-foreground py-2 text-center text-xs">{filtered.length}건을 모두 봤어요</p>
           ) : null}
         </CardContent>
       </Card>
