@@ -95,7 +95,7 @@ export function MeetingCompose({ team, uid }: { team: Team; uid: string }) {
               id="m-place"
               value={place}
               onChange={(e) => setPlace(e.target.value)}
-              placeholder="공학관 401호 또는 ZOOM"
+              placeholder="공과대학 3호관 502호"
             />
           </div>
           <label className="flex items-end gap-2 pb-2 text-sm">

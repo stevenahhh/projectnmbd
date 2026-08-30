@@ -23,7 +23,7 @@ export const DEMO_CHAT: DemoChatLine[] = [
   { day: -20, hour: 10, speaker: 2, text: 'LSTM은요? 딥러닝이 더 나을 것 같은데' },
   { day: -19, hour: 14, speaker: 1, text: 'baseline_model.ipynb 올렸어요. MAE 18.7명' },
   { day: -16, hour: 15, speaker: 1, text: 'lag 1, 2, 7일 피처 추가했더니 MAE 16.2로 떨어졌어요' },
-  { day: -15, hour: 10, speaker: 0, text: '내일 2시 공학관 401호 회의! 다들 가능하죠?' },
+  { day: -15, hour: 10, speaker: 0, text: '내일 2시 공과대학 3호관 502호 회의! 다들 가능하죠?' },
   { day: -14, hour: 14, speaker: 2, text: '중간 회의 자료 정리해서 올렸어요. 참석 체크 부탁드려요' },
   { day: -12, hour: 11, speaker: 2, text: '참고논문 3편 요약해서 pdf로 올릴게요' },
   { day: -11, hour: 13, speaker: 0, text: 'LSTM 비교 실험 이번 주 안에 가능할까요?' },
