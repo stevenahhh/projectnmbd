@@ -1,4 +1,5 @@
 import {
+  collection,
   doc,
   getDoc,
   runTransaction,
@@ -70,7 +71,7 @@ export async function createTeam(
 /** 초대 토큰 발급 — 멤버만 가능 (규칙 invites create 계약). */
 export async function createInvite(teamId: string, uid: string): Promise<string> {
   const db = getDb();
-  const inviteRef = doc(db, 'invites');
+  const inviteRef = doc(collection(db, 'invites'));
   await setDoc(inviteRef, {
     teamId,
     createdBy: uid,

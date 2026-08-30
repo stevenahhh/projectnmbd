@@ -33,6 +33,26 @@ function dueBadge(task: TeamTask, now: Date) {
   return <Badge variant="secondary">D-{diffDays}</Badge>;
 }
 
+/** 마감 입력 보조 — 학생 할 일은 대개 오늘·내일·이번 주 금요일·팀 마감이다. */
+const DUE_PRESETS: { label: string; value: (now: Date, teamDue: Date) => string }[] = [
+  { label: '오늘', value: (now) => endOfDay(now) },
+  { label: '내일', value: (now) => endOfDay(addDays(now, 1)) },
+  { label: '이번 주 금요일', value: (now) => endOfDay(addDays(now, (5 - now.getDay() + 7) % 7 || 7)) },
+  { label: '팀 마감일', value: (_now, teamDue) => endOfDay(teamDue) },
+];
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+/** datetime-local 값은 로컬 시각 문자열이라 ISO 를 쓸 수 없다. */
+function endOfDay(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T23:59`;
+}
+
 export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -175,6 +195,20 @@ export function TasksPanel({ team, tasks, uid }: TasksPanelProps) {
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="t-due">마감</Label>
                   <Input id="t-due" type="datetime-local" value={due} onChange={(e) => setDue(e.target.value)} />
+                  <div className="flex flex-wrap gap-1">
+                    {DUE_PRESETS.map((preset) => (
+                      <Button
+                        key={preset.label}
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-6 px-2 text-[11px]"
+                        onClick={() => setDue(preset.value(now, team.dueAt.toDate()))}
+                      >
+                        {preset.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">

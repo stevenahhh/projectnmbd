@@ -148,22 +148,29 @@ export function ContributionPie({ team, members }: ContributionPieProps) {
           return (
             <li
               key={member.uid}
-              className="hover:bg-muted/60 flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors"
+              className="hover:bg-muted/60 flex cursor-pointer flex-col gap-0.5 rounded-md px-2 py-1.5 text-sm transition-colors"
               onMouseMove={(e) => track(e, member)}
               onMouseLeave={() => setHover(null)}
             >
-              <span className="size-3 shrink-0 rounded-[3px]" style={{ background: color }} />
-              <span className="min-w-0 flex-1 truncate">
-                {info?.nickname ?? '—'}
-                {info?.roleLabel ? <span className="text-muted-foreground ml-2 text-xs">{info.roleLabel}</span> : null}
-                {team.leaderUid === member.uid ? (
-                  <span className="bg-primary text-primary-foreground ml-2 rounded px-1.5 py-0.5 text-[10px]">팀장</span>
+              <div className="flex items-center gap-2.5">
+                <span className="size-3 shrink-0 rounded-[3px]" style={{ background: color }} />
+                <span className="min-w-0 flex-1 truncate">
+                  {info?.nickname ?? '—'}
+                  {info?.roleLabel ? <span className="text-muted-foreground ml-2 text-xs">{info.roleLabel}</span> : null}
+                  {team.leaderUid === member.uid ? (
+                    <span className="bg-primary text-primary-foreground ml-2 rounded px-1.5 py-0.5 text-[10px]">팀장</span>
+                  ) : null}
+                </span>
+                {member.inactive ? (
+                  <span className="text-destructive text-xs">{member.inactiveDays ?? '—'}일 무활동</span>
                 ) : null}
-              </span>
-              {member.inactive ? (
-                <span className="text-destructive text-xs">{member.inactiveDays ?? '—'}일 무활동</span>
-              ) : null}
-              <span className="tabular-nums">{member.percent.toFixed(0)}%</span>
+                <span className="tabular-nums">{member.percent.toFixed(0)}%</span>
+              </div>
+              <p className="text-muted-foreground pl-[22px] text-[11px]">
+                문서 {member.raw.docChars.toLocaleString()}자 · 자료 {member.raw.fileCount} · 할 일{' '}
+                {member.raw.taskDone}/{member.raw.taskAssigned} · 회의 {member.raw.meetingAttend}회 · 활동{' '}
+                {member.raw.activeDays}일
+              </p>
             </li>
           );
         })}

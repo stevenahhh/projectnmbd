@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Archive, Crown, ShieldQuestion, Trash2, UserCheck } from 'lucide-react';
+import { Archive, Crown, Link2, ShieldQuestion, Trash2, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/components/providers/auth-provider';
-import { approveLeadership, requestLeadership } from '@/lib/teams';
+import { approveLeadership, createInvite, requestLeadership } from '@/lib/teams';
 import { assignRole, softDeleteTeam } from '@/lib/team-ops';
 import { formatKST } from '@/lib/time';
 import type { LeaderRequest, Team } from '@/lib/types';
@@ -24,8 +24,26 @@ interface MembersPanelProps {
 export function MembersPanel({ team, leaderRequests, uid }: MembersPanelProps) {
   const { refreshProfile } = useAuth();
   const [roleDrafts, setRoleDrafts] = useState<Record<string, string>>({});
+  const [inviteUrl, setInviteUrl] = useState('');
+  const [inviting, setInviting] = useState(false);
   const isLeader = team.leaderUid === uid;
   const leaderless = team.leaderUid === null;
+
+  // 팀원을 부를 유일한 경로다 — 링크를 만들어 바로 복사까지 해준다.
+  const makeInvite = async () => {
+    setInviting(true);
+    try {
+      const token = await createInvite(team.id, uid);
+      const url = `${window.location.origin}/join/${token}`;
+      setInviteUrl(url);
+      await navigator.clipboard.writeText(url).catch(() => undefined);
+      toast.success('초대 링크를 복사했어요 — 팀 카톡방에 붙여넣으세요');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '초대 링크를 만들지 못했어요');
+    } finally {
+      setInviting(false);
+    }
+  };
 
   const saveRole = async (memberUid: string) => {
     const label = roleDrafts[memberUid] ?? team.members[memberUid].roleLabel ?? '';
@@ -88,6 +106,25 @@ export function MembersPanel({ team, leaderRequests, uid }: MembersPanelProps) {
           </CardContent>
         </Card>
       ) : null}
+
+      {team.archived ? null : (
+        <Card>
+          <CardHeader className="flex-row flex-wrap items-center justify-between gap-2">
+            <div>
+              <CardTitle className="text-base">팀원 초대</CardTitle>
+              <p className="text-muted-foreground mt-0.5 text-xs">링크를 받은 사람은 바로 이 팀에 들어옵니다</p>
+            </div>
+            <Button onClick={() => void makeInvite()} disabled={inviting}>
+              <Link2 /> {inviting ? '만드는 중…' : '초대 링크 복사'}
+            </Button>
+          </CardHeader>
+          {inviteUrl ? (
+            <CardContent>
+              <Input readOnly value={inviteUrl} onFocus={(e) => e.currentTarget.select()} className="text-xs" />
+            </CardContent>
+          ) : null}
+        </Card>
+      )}
 
       <Card id="tut-member-list">
         <CardHeader>

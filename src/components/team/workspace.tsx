@@ -62,24 +62,28 @@ const TAB_ICONS: Record<WorkspaceTab, typeof LayoutDashboard> = {
   logs: ScrollText,
 };
 
-/** 브라우저 Notification 권한은 접속 중 1회만 요청한다. */
-function useBrowserNotificationPermission(): boolean {
+/**
+ * 브라우저 알림 권한 — 들어오자마자 묻지 않는다.
+ * 알림함을 처음 연 순간에만 요청해야 왜 묻는지가 사용자에게 보인다.
+ */
+function useBrowserNotificationPermission(): [boolean, () => void] {
   const [granted, setGranted] = useState<boolean>(() =>
     typeof Notification !== 'undefined' && Notification.permission === 'granted',
   );
-  useEffect(() => {
-    if (typeof Notification === 'undefined' || Notification.permission !== 'default') return;
-    // 요청은 비동기 — 이펙트에서 동기 setState 가 일어나지 않는다
+  const asked = useRef(false);
+  const ask = () => {
+    if (asked.current || typeof Notification === 'undefined' || Notification.permission !== 'default') return;
+    asked.current = true;
     void Notification.requestPermission().then((result) => setGranted(result === 'granted'));
-  }, []);
-  return granted;
+  };
+  return [granted, ask];
 }
 
 export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: string; initialTab?: WorkspaceTab }) {
   const { uid, status } = useAuth();
   const data = useTeamData(teamId);
   const [tab, setTab] = useState<WorkspaceTab>(initialTab);
-  const notifyGranted = useBrowserNotificationPermission();
+  const [notifyGranted, askNotifyPermission] = useBrowserNotificationPermission();
 
   const notifications = useMemo(() => {
     if (!data.team) return [];
@@ -122,7 +126,7 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
   const team = data.team as Team;
 
   const bell = (
-    <Popover>
+    <Popover onOpenChange={(open) => (open ? askNotifyPermission() : undefined)}>
       <PopoverTrigger asChild>
         <span className="relative inline-flex">
           <Button variant="outline" size="icon" aria-label="알림함">
@@ -177,11 +181,6 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
         </Link>
         <div className="mt-4">
           <TeamSwitcher current={team} />
-          {team.archived ? (
-            <Badge variant="secondary" className="mt-2 ml-1">
-              보관됨 — 읽기 전용
-            </Badge>
-          ) : null}
         </div>
         <nav className="mt-4 flex flex-col gap-0.5">{navItems}</nav>
         <div className="mt-auto flex flex-col gap-0.5 border-t pt-3">
@@ -230,7 +229,7 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
         <Tutorial tab={tab} />
 
         <main className="w-full flex-1 p-4 lg:px-8 lg:py-6">
-          {tab === 'dashboard' ? <DashboardPanel team={team} events={data.events} tasks={data.tasks as TeamTask[]} /> : null}
+          {tab === 'dashboard' ? <DashboardPanel team={team} events={data.events} tasks={data.tasks as TeamTask[]} uid={uid} /> : null}
           {tab === 'tasks' ? <TasksPanel team={team} tasks={data.tasks} uid={uid} /> : null}
           {tab === 'chat' ? <ChatPanel team={team} messages={data.messages} uid={uid} /> : null}
           {tab === 'meetings' ? <MeetingsPanel team={team} meetings={data.meetings} uid={uid} /> : null}

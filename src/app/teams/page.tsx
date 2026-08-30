@@ -56,7 +56,7 @@ export default function TeamsPage() {
         dueAt: new Date(due),
       });
       setOpen(false);
-      toast.success('팀 생성 — 초대 링크를 만들어 팀원을 모으세요');
+      toast.success('팀을 만들었어요 — 멤버 화면에서 초대 링크를 복사해 보내세요');
       router.push('/teams/' + teamId);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '생성 실패');

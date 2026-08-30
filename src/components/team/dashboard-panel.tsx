@@ -14,15 +14,17 @@ import type { LedgerEvent, Team, TeamTask } from '@/lib/types';
 import { ActivityHeatmap } from './activity-heatmap';
 import { ContributionPie } from './contribution-pie';
 import { DashboardStats } from './dashboard-stats';
+import { ManualNote } from './manual-note';
 
 interface DashboardPanelProps {
   team: Team;
   events: LedgerEvent[];
   tasks: TeamTask[];
+  uid: string;
 }
 
 /** 홈 — 기여 분포와 활동 시간축, 그리고 동료평가에 낼 한 장. */
-export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
+export function DashboardPanel({ team, events, tasks, uid }: DashboardPanelProps) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
   // 렌더 도중 Date.now() 를 부르는 것은 순수성 위반 — 마운트 시점 한 번만 캡처한다.
@@ -61,19 +63,27 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
     [events],
   );
 
-  const exportPng = async (excludeImages: boolean) => {
+  const exportPng = async () => {
     if (!surfaceRef.current) return;
     setExporting(true);
+    const surface = surfaceRef.current;
+    const stamp = formatKST(now, 'date').replaceAll(/[.\s]/g, '');
+    const render = (excludeImages: boolean) =>
+      toPng(surface, {
+        filter: excludeImages ? (node: HTMLElement) => node.tagName !== 'IMG' : undefined,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+      });
     try {
-      const filter = excludeImages ? (node: HTMLElement) => node.tagName !== 'IMG' : undefined;
-      const dataUrl = await toPng(surfaceRef.current, { filter, pixelRatio: 2, backgroundColor: '#ffffff' });
+      // 외부 이미지(썸네일)가 CORS 로 막히면 이미지를 빼고 한 번 더 — 사용자가 고를 일이 아니다
+      const dataUrl = await render(false).catch(() => render(true));
       const link = document.createElement('a');
-      link.download = `기여리포트-${team.name}-${excludeImages ? '썸네일제외' : '전체'}.png`;
+      link.download = `한몫-기여리포트-${team.name}-${stamp}.png`;
       link.href = dataUrl;
       link.click();
       toast.success('PNG로 저장했어요');
     } catch {
-      toast.error('PNG를 만들지 못했어요 — 썸네일 제외로 다시 시도해보세요');
+      toast.error('PNG를 만들지 못했어요');
     } finally {
       setExporting(false);
     }
@@ -84,15 +94,23 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
       <DashboardStats team={team} tasks={tasks} events={events} now={now} />
 
       <div ref={surfaceRef} id="report-surface" className="bg-background flex flex-col gap-4 p-1">
+        {/* 제출물로 바로 쓰이므로 팀·기간·생성 시각이 그림 안에 있어야 한다 */}
+        <div className="flex flex-wrap items-baseline justify-between gap-2 px-1">
+          <p className="text-sm font-semibold">
+            {team.name} · {team.courseLabel}
+          </p>
+          <p className="text-muted-foreground text-xs">
+            {formatKST(team.startAt, 'date')} ~ {formatKST(team.dueAt, 'date')} · {formatKST(now, 'date')} 기준
+          </p>
+        </div>
+
         <Card id="tutorial-bars">
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle className="text-lg">기여도</CardTitle>
             <div className="flex gap-2" data-no-export>
-              <Button id="tutorial-export" size="sm" onClick={() => void exportPng(false)} disabled={exporting}>
-                <Download /> 리포트 PNG
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => void exportPng(true)} disabled={exporting}>
-                썸네일 제외
+              {team.archived ? null : <ManualNote team={team} uid={uid} />}
+              <Button id="tutorial-export" size="sm" onClick={() => void exportPng()} disabled={exporting}>
+                <Download /> 동료평가용 리포트 저장
               </Button>
             </div>
           </CardHeader>
@@ -132,10 +150,13 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
         </div>
       </div>
 
-      <Badge variant="outline" className="self-start text-[11px]">
-        가중치 · 문서 {team.weights.doc} / 자료 {team.weights.file} / 할 일 {team.weights.task} / 회의{' '}
-        {team.weights.meeting}
-      </Badge>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="outline" className="text-[11px]">
+          가중치 · 문서 {team.weights.doc} / 자료 {team.weights.file} / 할 일 {team.weights.task} / 회의{' '}
+          {team.weights.meeting}
+        </Badge>
+        <span className="text-muted-foreground text-[11px]">대화와 활동일은 참고용이라 %에는 들어가지 않아요</span>
+      </div>
     </div>
   );
 }

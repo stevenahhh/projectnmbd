@@ -61,6 +61,15 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
     }
   };
 
+  const attend = async (meeting: Meeting) => {
+    try {
+      await checkAttend(team.id, uid, meeting);
+      toast.success('참석으로 기록했어요');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '기록하지 못했어요');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-end">
@@ -134,10 +143,13 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {meetings.map((meeting) => (
-          <button
+          <div
             key={meeting.id}
             id={meeting.id === meetings[0]?.id ? 'tut-meeting-card' : undefined}
+            role="button"
+            tabIndex={0}
             onClick={() => setReading(meeting)}
+            onKeyDown={(e) => (e.key === 'Enter' ? setReading(meeting) : undefined)}
             className="bg-card hover:border-primary/50 flex cursor-pointer flex-col gap-2 rounded-xl border p-4 text-left shadow-sm transition-all hover:shadow-md"
           >
             <div className="flex items-start justify-between gap-2">
@@ -148,16 +160,35 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
               {formatKST(meeting.startedAt)} · {meeting.durationMin}분
             </p>
             <SummaryLines summary3={meeting.summary3} compact />
-            <p className="text-muted-foreground mt-auto pt-1 text-[11px]">
-              참석 {meeting.attendeeUids.length}명
-              {meeting.attendeeUids.length > 0
-                ? ` · ${meeting.attendeeUids
-                    .slice(0, 3)
-                    .map((a) => team.members[a]?.nickname ?? '—')
-                    .join(', ')}${meeting.attendeeUids.length > 3 ? ' 외' : ''}`
-                : ''}
-            </p>
-          </button>
+            <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+              <p className="text-muted-foreground text-[11px]">
+                참석 {meeting.attendeeUids.length}명
+                {meeting.attendeeUids.length > 0
+                  ? ` · ${meeting.attendeeUids
+                      .slice(0, 3)
+                      .map((a) => team.members[a]?.nickname ?? '—')
+                      .join(', ')}${meeting.attendeeUids.length > 3 ? ' 외' : ''}`
+                  : ''}
+              </p>
+              {meeting.attendeeUids.includes(uid) ? (
+                <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
+                  <CalendarCheck className="size-3.5" /> 참석함
+                </span>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-7 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void attend(meeting);
+                  }}
+                >
+                  <CalendarCheck /> 참석 체크
+                </Button>
+              )}
+            </div>
+          </div>
         ))}
         {meetings.length === 0 ? (
           <p className="text-muted-foreground py-8 text-center text-sm md:col-span-2 xl:col-span-3">
@@ -212,10 +243,7 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
                 variant={reading.attendeeUids.includes(uid) ? 'secondary' : 'default'}
                 className="self-start"
                 onClick={() =>
-                  void checkAttend(team.id, uid, reading).then(() => {
-                    toast.success('참석으로 기록했어요');
-                    setReading(null);
-                  })
+                  void attend(reading).then(() => setReading(null))
                 }
               >
                 <CalendarCheck /> {reading.attendeeUids.includes(uid) ? '참석함' : '참석 체크'}
