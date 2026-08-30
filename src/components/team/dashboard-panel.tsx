@@ -78,7 +78,7 @@ export function DashboardPanel({ team, events, tasks, uid }: DashboardPanelProps
       // 외부 이미지(썸네일)가 CORS 로 막히면 이미지를 빼고 한 번 더 — 사용자가 고를 일이 아니다
       const dataUrl = await render(false).catch(() => render(true));
       const link = document.createElement('a');
-      link.download = `한몫-기여리포트-${team.name}-${stamp}.png`;
+      link.download = `Dibs-기여리포트-${team.name}-${stamp}.png`;
       link.href = dataUrl;
       link.click();
       toast.success('PNG로 저장했어요');

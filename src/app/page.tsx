@@ -1,13 +1,16 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Wordmark } from '@/components/wordmark';
 
 export default function Landing() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-center gap-8 px-6 text-center">
       <div className="flex flex-col gap-4">
-        <h1 className="text-4xl font-bold tracking-tight">한몫</h1>
+        <h1 className="text-5xl">
+          <Wordmark />
+        </h1>
         <p className="text-muted-foreground text-lg">
-          팀플에서 내 한몫이 그대로 남습니다 — 문서·자료·할 일·대화를 모으면,
+          팀플에서 내 몫이 그대로 남습니다 — 문서·자료·할 일·대화를 모으면,
           <br />
           기여도는 자동으로 정리됩니다.
         </p>

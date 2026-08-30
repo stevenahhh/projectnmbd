@@ -10,11 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/components/providers/auth-provider';
+import { Wordmark } from '@/components/wordmark';
 
 const SELLING_POINTS = [
   { title: '한 곳에 모으기', desc: '문서·자료·할 일·대화·회의록을 팀 공간 하나에' },
   { title: '버전 관리', desc: '문서는 저장할 때마다 버전이 남고, 예전 버전도 그대로 열려요' },
-  { title: '자동 기여도', desc: '쓰기만 하면 누가 얼마나 한몫 했는지 자동으로 정리됩니다' },
+  { title: '자동 기여도', desc: '쓰기만 하면 누가 얼마나 했는지 자동으로 정리됩니다' },
   { title: '기여 리포트', desc: '동료평가에 첨부할 한 장을 PNG로 저장할 수 있어요' },
 ];
 
@@ -65,7 +66,9 @@ export default function OnboardingPage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-5 px-6 py-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold">한몫에 오신 걸 환영해요</h1>
+        <h1 className="text-lg font-bold">
+          <Wordmark className="text-xl" />에 오신 걸 환영해요
+        </h1>
         <Button asChild variant="ghost" size="sm"><Link href="/">처음으로</Link></Button>
       </div>
       <Card>

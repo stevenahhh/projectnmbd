@@ -33,6 +33,7 @@ import { LogsPanel } from './logs-panel';
 import { Tutorial } from './tutorial';
 import { SettingsMenu } from './settings-menu';
 import { TeamSwitcher } from './team-switcher';
+import { Wordmark } from '@/components/wordmark';
 import type { Team, TeamTask } from '@/lib/types';
 
 const TABS = ['dashboard', 'tasks', 'chat', 'meetings', 'docs', 'files', 'gantt', 'members', 'logs'] as const;
@@ -101,7 +102,7 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
     seen.current = new Set([...seen.current, ...fresh.map((n) => n.id)]);
     if (notifyGranted) {
       for (const n of fresh.slice(0, 2)) {
-        new Notification('한몫', { body: n.message });
+        new Notification('Dibs', { body: n.message });
       }
     }
   }, [notifications, notifyGranted]);
@@ -177,7 +178,7 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
       {/* 사이드바 — 데스크톱 전용 */}
       <aside className="bg-card sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r p-3 lg:flex">
         <Link href="/" className="hover:bg-muted rounded-md px-2 py-1.5 text-lg font-bold tracking-tight">
-          한몫
+          <Wordmark />
         </Link>
         <div className="mt-4">
           <TeamSwitcher current={team} />

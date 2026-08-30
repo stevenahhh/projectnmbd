@@ -207,3 +207,14 @@
 }
 .rich-editor td,
 .rich-editor th { position: relative; }
+/*
+ * 브랜드 표기 — 좁힌 세리프. Noto Serif Display 는 너비 축(wdth 62.5~100)이 있어
+ * 가로로 눌러 그리는 가짜 압축이 아니라 실제 좁은 자형으로 그려진다.
+ */
+.wordmark {
+  font-family: var(--font-wordmark), 'Times New Roman', serif;
+  font-stretch: 62.5%;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  font-feature-settings: normal;
+}
