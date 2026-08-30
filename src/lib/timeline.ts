@@ -14,7 +14,7 @@ export const SNAP_MS = 30 * MINUTE_MS;
 
 export const VIEW_WIDTH = 960;
 /** 세로 치수와 글자는 한 배율로 함께 키운다 — 따로 만지면 비례가 깨진다. */
-export const SCALE = 1.25;
+export const SCALE = 1.15;
 export const AXIS_HEIGHT = Math.round(40 * SCALE);
 export const MARKER_ROW_HEIGHT = Math.round(18 * SCALE);
 export const BAR_HEIGHT = Math.round(22 * SCALE);

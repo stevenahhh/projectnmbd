@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFitHeight } from '@/hooks/use-fit-height';
 import { useTimelineDrag } from '@/hooks/use-timeline-drag';
 import { useTimelineLayout } from '@/hooks/use-timeline-layout';
 import { useTimelineView } from '@/hooks/use-timeline-view';
@@ -36,6 +37,9 @@ interface GanttPanelProps {
  */
 export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  // 카드는 화면 아래끝까지만 차지하고, 넘치는 차트는 안쪽에서 스크롤한다
+  const cardHeight = useFitHeight(cardRef);
   // 렌더 도중 Date.now() 를 부르는 것은 순수성 위반 — 마운트 시점 한 번만 캡처한다.
   const [nowMs] = useState(() => Date.now());
   const [editing, setEditing] = useState<TeamTask | null>(null);
@@ -136,8 +140,8 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
   };
 
   return (
-    <Card>
-      <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
+    <Card ref={cardRef} className="flex flex-col overflow-hidden" style={{ height: cardHeight }}>
+      <CardHeader className="shrink-0 flex-row flex-wrap items-center justify-between gap-3">
         <CardTitle className="text-base">타임라인</CardTitle>
         <TimelineToolbar
           historyCount={history.length}
@@ -151,7 +155,7 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
         />
       </CardHeader>
 
-      <CardContent className="overflow-x-auto">
+      <CardContent className="min-h-0 flex-1 overflow-auto">
         <svg
           id="tut-timeline-chart"
           ref={svgRef}
