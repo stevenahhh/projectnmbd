@@ -96,8 +96,9 @@ export function buildDemoDataset(visitorUid: string, bootstrap: Date): DemoDatas
   events.push({ type: 'team.create', actorUid: visitorUid, payload: { name: DEMO_TEAM_NAME }, at: teamStart });
   const archivedStart = at({ day: -200, hour: 9 });
   events.push({ type: 'doc.edit', actorUid: uidOf(0), payload: { docTitle: 'ERD 설계', charsDelta: 2100 }, at: at({ day: -190, hour: 11 }) });
-  events.push({ type: 'task.complete', actorUid: uidOf(1), payload: { title: '정규화 과제 완료', onTime: true }, at: at({ day: -180, hour: 15 }) });
-  events.push({ type: 'meeting.attend', actorUid: uidOf(2), payload: {}, at: at({ day: -170, hour: 14 }) });
+  // 이 팀에 없는 할 일·회의를 가리키는 이벤트는 두지 않는다 — 집계가 세지 못하는 기록은 싣지 않는다
+  events.push({ type: 'file.upload', actorUid: uidOf(1), payload: { fileName: '정규화_과제.pdf', sizeBytes: 240_000 }, at: at({ day: -180, hour: 15 }) });
+  events.push({ type: 'doc.edit', actorUid: uidOf(2), payload: { docTitle: '쿼리 튜닝 정리', charsDelta: 860 }, at: at({ day: -170, hour: 14 }) });
   events.push({ type: 'message.post', actorUid: uidOf(0), payload: { chars: 42 }, at: at({ day: -165, hour: 10 }) });
 
   // 대화 — message + message.post 2벌
