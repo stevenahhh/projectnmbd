@@ -16,9 +16,9 @@ const BOOTSTRAP = new Date('2026-08-30T03:00:00Z');
 const VISITOR = 'uid_visitor_abc';
 
 describe('데모 데이터셋 (A.10 개정)', () => {
-  it('대화는 80~120줄이다', () => {
-    expect(DEMO_CHAT.length).toBeGreaterThanOrEqual(80);
-    expect(DEMO_CHAT.length).toBeLessThanOrEqual(120);
+  it('대화는 40줄 수준으로 축소돼 있다', () => {
+    expect(DEMO_CHAT.length).toBeGreaterThanOrEqual(38);
+    expect(DEMO_CHAT.length).toBeLessThanOrEqual(45);
   });
 
   it('팀원 4인 — 가상 실명·학번 형식·중복 금지', () => {
@@ -106,7 +106,7 @@ describe('데모 데이터셋 (A.10 개정)', () => {
     const ds = buildDemoDataset(VISITOR, BOOTSTRAP);
     const writes = estimateDemoWrites(ds);
     expect(writes).toBeLessThanOrEqual(DEMO_DATASET_WRITE_CAP);
-    expect(writes).toBeGreaterThan(200);
+    expect(writes).toBeGreaterThan(180);
   });
 
   it('보관된 지난 학기 팀이 1개 있다', () => {

@@ -150,27 +150,37 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
             {result.members.map((member) => (
               <div key={member.uid} className="flex items-center gap-2">
                 <span className="text-muted-foreground w-12 shrink-0 text-right text-xs">{team.members[member.uid].nickname}</span>
-                <div className="relative flex h-4 flex-1 items-center">
+                <div className="flex flex-1 gap-[3px]">
                   {result.timelineDays.map((day) => {
                     const count = result.timeline[member.uid]?.[day] ?? 0;
-                    if (count === 0) return null;
-                    const index = result.timelineDays.indexOf(day);
-                    const left = (index / Math.max(1, result.timelineDays.length - 1)) * 100;
-                    return (
-                      <span
-                        key={day}
-                        title={`${day} · ${count}건`}
-                        className="bg-primary/70 absolute size-2 -translate-x-1/2 rounded-full"
-                        style={{ left: `${left}%` }}
-                      />
-                    );
+                    const [y, m, d] = day.split('-');
+                    const label = `${Number(y)}. ${Number(m)}. ${Number(d)} - ${count}개 활동`;
+                    const color =
+                      count === 0
+                        ? 'bg-muted'
+                        : count <= 2
+                          ? 'bg-primary/30'
+                          : count <= 5
+                            ? 'bg-primary/55'
+                            : count <= 10
+                              ? 'bg-primary/75'
+                              : 'bg-primary';
+                    return <span key={day} title={label} className={`size-3 shrink-0 rounded-[2px] ${color}`} />;
                   })}
                 </div>
               </div>
             ))}
-            <div className="text-muted-foreground flex justify-between text-[10px]">
+            <div className="text-muted-foreground flex items-center justify-between text-[10px]">
               <span>{result.timelineDays[0] ?? ''}</span>
-              <span>{result.timelineDays[Math.floor(result.timelineDays.length / 2)] ?? ''}</span>
+              <span className="flex items-center gap-1">
+                활동 적음
+                <span className="bg-muted size-2.5 rounded-[2px]" />
+                <span className="bg-primary/30 size-2.5 rounded-[2px]" />
+                <span className="bg-primary/55 size-2.5 rounded-[2px]" />
+                <span className="bg-primary/75 size-2.5 rounded-[2px]" />
+                <span className="bg-primary size-2.5 rounded-[2px]" />
+                활동 많음
+              </span>
               <span>{result.timelineDays[result.timelineDays.length - 1] ?? ''}</span>
             </div>
           </CardContent>

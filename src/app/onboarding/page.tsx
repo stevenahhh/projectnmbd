@@ -21,7 +21,9 @@ export default function OnboardingPage() {
   const { status, uid, profile, saveProfile, triggerBootstrap } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [nickname, setNickname] = useState(profile?.nickname ?? '');
+  // 기본 닉네임이 채워져 있어 아무 글자나 쓰지 않아도 바로 시작할 수 있다
+  const defaultNickname = '새싹' + Math.floor(Math.random() * 90 + 10);
+  const [nickname, setNickname] = useState(profile?.nickname ?? defaultNickname);
   const [skillTags, setSkillTags] = useState<string[]>(profile?.skillTags ?? []);
   const [customSkill, setCustomSkill] = useState('');
   const [github, setGithub] = useState(profile?.github ?? '');
@@ -46,7 +48,7 @@ export default function OnboardingPage() {
       if (teamId) {
         router.push('/teams/' + teamId);
       } else {
-        toast.warning('데모 팀 복제에 실패했어요 — 직접 팀을 만들어 시작할 수 있어요');
+        toast.warning('팀 준비에 실패했어요 — 직접 팀을 만들어 시작할 수 있어요');
         router.push('/teams');
       }
     } finally {
@@ -131,7 +133,7 @@ export default function OnboardingPage() {
               <div className="flex justify-between">
                 <Button variant="ghost" onClick={() => setStep(2)}>이전</Button>
                 <Button disabled={saving || !nickname.trim()} onClick={() => void finish()}>
-                  {saving ? '데모 팀 준비 중…' : '시작하기'}
+                  {saving ? '팀 준비 중…' : '시작하기'}
                 </Button>
               </div>
             </div>

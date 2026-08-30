@@ -17,7 +17,7 @@ export default function Landing() {
           <Link href="/onboarding">체험하기</Link>
         </Button>
         <p className="text-muted-foreground text-xs">
-          클릭하면 익명 계정이 만들어지고, 1개월치 팀플 데모 팀이 내 전용으로 복제됩니다
+          클릭하면 익명 계정이 만들어지고, 1개월치 팀플 기록이 내 전용 공간으로 복제됩니다
         </p>
       </div>
       <div className="grid gap-3 text-left text-sm sm:grid-cols-3">

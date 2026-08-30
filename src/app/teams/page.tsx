@@ -155,7 +155,7 @@ export default function TeamsPage() {
         ))}
         {activeTeams.length === 0 ? (
           <p className="text-muted-foreground text-sm sm:col-span-2">
-            아직 팀이 없어요 — 데모 팀이 준비 중이거나 직접 만들 수 있어요.
+            아직 팀이 없어요 — 새 팀을 만들거나 초대 링크로 합류해보세요.
           </p>
         ) : null}
       </div>
