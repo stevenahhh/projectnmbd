@@ -11,11 +11,6 @@ import { getDb } from '@/lib/firebase/client';
 import { writeEvent } from '@/lib/ledger';
 import type { Team, UserProfile } from '@/lib/types';
 
-/** users/{uid}.teams — 내 팀 목록의 인덱스. 팀 전역 열거는 규칙이 막는다 (S2). */
-export async function getUserTeamIds(profile: UserProfile | null): Promise<string[]> {
-  if (!profile?.teams) return [];
-  return Object.keys(profile.teams).filter(Boolean);
-}
 
 export async function getTeam(teamId: string): Promise<Team | null> {
   const snap = await getDoc(doc(getDb(), 'teams', teamId));

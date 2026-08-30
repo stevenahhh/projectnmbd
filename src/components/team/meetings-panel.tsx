@@ -1,20 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarCheck, ClipboardList, Plus, Sparkles } from 'lucide-react';
+import { CalendarCheck, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Markdown } from '@/components/markdown';
-import { checkAttend, createMeeting } from '@/lib/team-ops';
+import { checkAttend } from '@/lib/team-ops';
 import { formatKST } from '@/lib/time';
 import type { Meeting, Team } from '@/lib/types';
-import { SummaryComposer, SummaryLines, useMeetingSummary } from './meeting-summary';
+import { MeetingCompose } from './meeting-compose';
+import { SummaryLines } from './meeting-summary';
 
 interface MeetingsPanelProps {
   team: Team;
@@ -24,42 +21,7 @@ interface MeetingsPanelProps {
 
 /** 회의록 (§2.8-3) — 정형 템플릿, 화자 분리·녹음 없음. 참석 체크가 출석 기록이다. */
 export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
-  const [open, setOpen] = useState(false);
   const [reading, setReading] = useState<Meeting | null>(null);
-  const [title, setTitle] = useState('');
-  const [startedAt, setStartedAt] = useState('');
-  const [durationMin, setDurationMin] = useState('60');
-  const [place, setPlace] = useState('');
-  const [online, setOnline] = useState(false);
-  const [attendees, setAttendees] = useState<string[]>([uid]);
-  const summary = useMeetingSummary();
-  const [body, setBody] = useState('');
-
-  const submit = async () => {
-    if (!title.trim() || !startedAt || !place.trim()) {
-      toast.error('주제·일시·장소를 입력하세요');
-      return;
-    }
-    try {
-      await createMeeting(team.id, uid, {
-        title: title.trim(),
-        startedAt: new Date(startedAt),
-        durationMin: Number(durationMin) || 60,
-        place: place.trim(),
-        online,
-        attendeeUids: attendees,
-        summary3: summary.lines.map((line) => line.trim()).filter(Boolean).join('\n'),
-        body: body.trim(),
-      });
-      setOpen(false);
-      setTitle('');
-      summary.reset();
-      setBody('');
-      toast.success('회의록을 저장했어요');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : '저장 실패');
-    }
-  };
 
   const attend = async (meeting: Meeting) => {
     try {
@@ -73,89 +35,7 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-end">
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button id="tut-meeting-new">
-              <Plus /> 회의록 작성
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-xl">
-            <DialogHeader>
-              <DialogTitle>회의록</DialogTitle>
-            </DialogHeader>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <Label htmlFor="m-title">주제</Label>
-                <Input id="m-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예: 주 3회 — 모델 리뷰" />
-              </div>
-              <div>
-                <Label htmlFor="m-when">일시</Label>
-                <Input id="m-when" type="datetime-local" value={startedAt} onChange={(e) => setStartedAt(e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="m-dur">진행시간(분)</Label>
-                <Input id="m-dur" type="number" value={durationMin} onChange={(e) => setDurationMin(e.target.value)} />
-              </div>
-              <div>
-                <Label htmlFor="m-place">장소</Label>
-                <Input id="m-place" value={place} onChange={(e) => setPlace(e.target.value)} placeholder="공학관 401호 또는 ZOOM" />
-              </div>
-              <label className="flex items-end gap-2 pb-2 text-sm">
-                <Checkbox checked={online} onCheckedChange={(v) => setOnline(v === true)} /> 비대면
-              </label>
-              <div className="col-span-2">
-                <Label>참여인원</Label>
-                <div className="mt-1.5 flex flex-wrap gap-3">
-                  {Object.entries(team.members).map(([memberUid, member]) => (
-                    <label key={memberUid} className="flex items-center gap-1.5 text-sm">
-                      <Checkbox
-                        checked={attendees.includes(memberUid)}
-                        onCheckedChange={(v) =>
-                          setAttendees((prev) => (v === true ? [...prev, memberUid] : prev.filter((u) => u !== memberUid)))
-                        }
-                      />
-                      {member.nickname}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="m-body">내용</Label>
-                <Textarea
-                  id="m-body"
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  rows={6}
-                  placeholder={'## 논의\n- …\n\n## 결정\n- …'}
-                />
-                <p className="text-muted-foreground mt-1 text-[11px]">## 제목, - 목록 같은 마크다운을 그대로 씁니다</p>
-              </div>
-              <div className="col-span-2">
-                <SummaryComposer lines={summary.lines} status={summary.status} onChange={summary.setLines} />
-              </div>
-            </div>
-            <DialogFooter>
-              {/* 요약을 만들어야 저장이 열린다. 본문을 고치면 다시 만들게 된다. */}
-              {summary.isFresh(body) ? (
-                <Button onClick={() => void submit()}>저장</Button>
-              ) : (
-                <Button
-                  disabled={summary.status === 'running' || body.trim().length < 30}
-                  onClick={() => void summary.generate(title, body)}
-                >
-                  <Sparkles className={summary.status === 'running' ? 'animate-pulse' : ''} />
-                  {summary.status === 'running' ? '요약 생성 중…' : 'AI 요약 생성'}
-                </Button>
-              )}
-              {/* AI 가 응답하지 못했을 때 쓴 글이 갇히지 않도록 열어 두는 문 */}
-              {summary.status === 'failed' ? (
-                <Button variant="ghost" onClick={() => void submit()}>
-                  요약 없이 저장
-                </Button>
-              ) : null}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <MeetingCompose team={team} uid={uid} />
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

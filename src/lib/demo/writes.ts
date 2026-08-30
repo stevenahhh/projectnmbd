@@ -1,5 +1,5 @@
 /** 부트스트랩 1회가 만드는 쓰기 건수 추정 — Spark 한도(DEMO_DATASET_WRITE_CAP) 방어용. */
-import type { DemoDataset } from '../demo-dataset';
+import type { DemoDataset } from './dataset-shape';
 
 export function estimateDemoWrites(ds: DemoDataset): number {
   return (

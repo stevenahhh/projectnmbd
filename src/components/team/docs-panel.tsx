@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { RichEditor } from '@/components/ui/rich-editor';
 import { getDb } from '@/lib/firebase/client';
 import { createTeamDoc, saveTeamDoc, setDocLock } from '@/lib/team-ops';
 import { formatKST } from '@/lib/time';
@@ -159,7 +159,13 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
             )}
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={18} disabled={Boolean(lockedByOther)} className="font-mono text-sm" />
+            <RichEditor
+              ariaLabel="문서 내용"
+              value={draft}
+              onChange={setDraft}
+              editable={!lockedByOther}
+              placeholder="내용을 적어주세요"
+            />
 
             <div id="tut-doc-versions" className="flex flex-col gap-1.5">
               <p className="flex items-center gap-1.5 text-sm font-medium">

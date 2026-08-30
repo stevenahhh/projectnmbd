@@ -12,7 +12,7 @@ function markerColor(items: TeamTask[], nowMs: number): string {
 
 interface TimelineAxisProps {
   ticks: Tick[];
-  dayLines: number[];
+  dayLines: { ms: number; weekStart: boolean }[];
   markers: PackedMarker<TeamTask>[];
   markerRows: number;
   showMarkerLabel: boolean;
@@ -44,17 +44,17 @@ export function TimelineAxis({
 
   return (
     <g>
-      {dayLines.map((ms) => (
+      {dayLines.map((day) => (
         <line
-          key={`day-${ms}`}
-          x1={x(ms)}
+          key={`day-${day.ms}`}
+          x1={x(day.ms)}
           y1={axisBottom}
-          x2={x(ms)}
+          x2={x(day.ms)}
           y2={height}
           stroke="currentColor"
           strokeWidth={1}
           className="text-border"
-          opacity={0.25}
+          opacity={day.weekStart ? 0.6 : 0.22}
         />
       ))}
 

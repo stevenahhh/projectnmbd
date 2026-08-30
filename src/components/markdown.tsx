@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
+import { parseMarkdown } from '@/lib/markdown-doc';
 
 /**
  * 회의록·문서 본문용 최소 마크다운 렌더러.
@@ -25,54 +26,8 @@ function inline(text: string): ReactNode {
   });
 }
 
-type Block =
-  | { kind: 'heading'; level: number; text: string }
-  | { kind: 'ul'; items: string[] }
-  | { kind: 'ol'; items: string[] }
-  | { kind: 'quote'; lines: string[] }
-  | { kind: 'p'; lines: string[] };
-
-function parse(source: string): Block[] {
-  const blocks: Block[] = [];
-  for (const rawLine of source.split('\n')) {
-    const line = rawLine.trimEnd();
-    const heading = /^(#{1,3})\s+(.*)$/.exec(line);
-    const bullet = /^\s*[-*]\s+(.*)$/.exec(line);
-    const ordered = /^\s*(\d+)[.)]\s+(.*)$/.exec(line);
-    const quote = /^>\s?(.*)$/.exec(line);
-    const last = blocks[blocks.length - 1];
-
-    if (line.trim() === '') {
-      if (last && last.kind === 'p') blocks.push({ kind: 'p', lines: [] });
-      continue;
-    }
-    if (heading) {
-      blocks.push({ kind: 'heading', level: heading[1].length, text: heading[2] });
-      continue;
-    }
-    if (bullet) {
-      if (last?.kind === 'ul') last.items.push(bullet[1]);
-      else blocks.push({ kind: 'ul', items: [bullet[1]] });
-      continue;
-    }
-    if (ordered) {
-      if (last?.kind === 'ol') last.items.push(ordered[2]);
-      else blocks.push({ kind: 'ol', items: [ordered[2]] });
-      continue;
-    }
-    if (quote) {
-      if (last?.kind === 'quote') last.lines.push(quote[1]);
-      else blocks.push({ kind: 'quote', lines: [quote[1]] });
-      continue;
-    }
-    if (last?.kind === 'p' && last.lines.length > 0) last.lines.push(line);
-    else blocks.push({ kind: 'p', lines: [line] });
-  }
-  return blocks.filter((block) => block.kind !== 'p' || block.lines.length > 0);
-}
-
 export function Markdown({ text, className }: { text: string; className?: string }) {
-  const blocks = parse(text);
+  const blocks = parseMarkdown(text);
   return (
     <div className={className ? `flex flex-col gap-3 ${className}` : 'flex flex-col gap-3'}>
       {blocks.map((block, index) => {

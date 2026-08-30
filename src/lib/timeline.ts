@@ -160,30 +160,59 @@ export function startOfDayMs(ms: number): number {
   return date.getTime();
 }
 
+export const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+/**
+ * 눈금의 절대 기준점 — 2000-01-03 은 월요일이다.
+ * 보이는 구간이 아니라 이 지점에서 간격을 세기 때문에, 좌우로 밀어도 눈금이 같은 날짜에 선다.
+ * (KST 는 서머타임이 없어 하루를 86,400,000ms 로 세도 어긋나지 않는다.)
+ */
+export const MONDAY_ANCHOR_MS = new Date(2000, 0, 3).getTime();
+
+/** 그 주의 월요일 자정. 주는 월요일에 시작한다. */
+export function startOfWeekMs(ms: number): number {
+  const date = new Date(startOfDayMs(ms));
+  date.setDate(date.getDate() - ((date.getDay() + 6) % 7));
+  return date.getTime();
+}
+
+/** 날짜 눈금은 요일을 함께 보여준다 — 팀플 일정은 무슨 요일인지가 먼저 궁금하다. */
+function dayLabel(date: Date): string {
+  return `${date.getMonth() + 1}/${date.getDate()}(${WEEKDAYS[date.getDay()]})`;
+}
+
 function tickLabel(ms: number, stepMs: number): { label: string; major: boolean } {
   const date = new Date(ms);
   if (stepMs < DAY_MS) {
     const midnight = date.getHours() === 0 && date.getMinutes() === 0;
     return midnight
-      ? { label: `${date.getMonth() + 1}/${date.getDate()}`, major: true }
+      ? { label: dayLabel(date), major: true }
       : { label: `${pad(date.getHours())}:${pad(date.getMinutes())}`, major: false };
   }
-  const firstOfMonth = date.getDate() === 1;
-  return firstOfMonth
-    ? { label: `${date.getMonth() + 1}월`, major: true }
-    : { label: `${date.getMonth() + 1}/${date.getDate()}`, major: false };
+  // 주의 시작(월요일)과 달의 시작을 굵게 — 이 두 선이 화면의 기준자다
+  return { label: dayLabel(date), major: date.getDay() === 1 || date.getDate() === 1 };
 }
 
-/** 라벨 없는 하루 경계선 — 너무 촘촘해지면 그리지 않는다. */
-export function dayBoundaries(startMs: number, endMs: number, widthPx: number, minGapPx = 8): number[] {
+/** 라벨 없는 하루 경계선 — 월요일은 조금 진하게 그어 주 단위가 보이게 한다. */
+export function dayBoundaries(
+  startMs: number,
+  endMs: number,
+  widthPx: number,
+  minGapPx = 8,
+): { ms: number; weekStart: boolean }[] {
   const range = Math.max(1, endMs - startMs);
   if ((DAY_MS / range) * widthPx < minGapPx) return [];
-  const days: number[] = [];
-  for (let ms = startOfDayMs(startMs) + DAY_MS; ms <= endMs; ms += DAY_MS) days.push(ms);
+  const days: { ms: number; weekStart: boolean }[] = [];
+  for (let ms = startOfDayMs(startMs) + DAY_MS; ms <= endMs; ms += DAY_MS) {
+    days.push({ ms, weekStart: new Date(ms).getDay() === 1 });
+  }
   return days;
 }
 
-/** 눈금은 자정 기준으로 정렬한다 — 시계에 없는 자리에 선이 서지 않게. */
+/**
+ * 눈금 위치. 하루 이상 간격은 고정된 월요일 기준점에서 세므로 좌우로 밀어도 자리가 바뀌지 않는다.
+ * 하루보다 짧은 간격은 그날 자정에서 센다 — 자정 자체가 고정된 격자다.
+ */
 export function generateTicks(startMs: number, endMs: number, stepMs: number): Tick[] {
   const ticks: Tick[] = [];
   if (stepMs >= 28 * DAY_MS) {
@@ -197,8 +226,8 @@ export function generateTicks(startMs: number, endMs: number, stepMs: number): T
     return ticks;
   }
 
-  const dayStart = startOfDayMs(startMs);
-  const first = dayStart + Math.ceil((startMs - dayStart) / stepMs) * stepMs;
+  const anchor = stepMs >= DAY_MS ? MONDAY_ANCHOR_MS : startOfDayMs(startMs);
+  const first = anchor + Math.ceil((startMs - anchor) / stepMs) * stepMs;
   for (let ms = first; ms <= endMs; ms += stepMs) {
     ticks.push({ ms, ...tickLabel(ms, stepMs) });
   }

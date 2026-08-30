@@ -11,6 +11,7 @@ import {
   DAY_MS,
   HOUR_MS,
   SNAP_MS,
+  dayBoundaries,
   dragRange,
   barLabelText,
   estimateTextPx,
@@ -91,11 +92,48 @@ describe('타임라인 좌표·시간 계산', () => {
     });
   });
 
-  it('눈금은 날짜가 바뀌는 자리를 굵게 표시한다', () => {
-    const ticks = generateTicks(at('2026-08-31T00:00:00'), at('2026-09-03T00:00:00'), DAY_MS);
-    expect(ticks.map((tick) => tick.label)).toEqual(['8/31', '9월', '9/2', '9/3']);
-    expect(ticks.find((tick) => tick.label === '9월')?.major).toBe(true);
-    expect(ticks.find((tick) => tick.label === '9/2')?.major).toBe(false);
+  describe('눈금', () => {
+    it('날짜에 요일을 함께 적고, 월요일과 1일을 굵게 표시한다', () => {
+      const ticks = generateTicks(at('2026-08-31T00:00:00'), at('2026-09-03T00:00:00'), DAY_MS);
+      expect(ticks.map((tick) => tick.label)).toEqual(['8/31(월)', '9/1(화)', '9/2(수)', '9/3(목)']);
+      expect(ticks.find((tick) => tick.label === '8/31(월)')?.major).toBe(true);
+      expect(ticks.find((tick) => tick.label === '9/1(화)')?.major).toBe(true);
+      expect(ticks.find((tick) => tick.label === '9/2(수)')?.major).toBe(false);
+    });
+
+    it('주 눈금은 언제나 월요일에 선다', () => {
+      const ticks = generateTicks(at('2026-08-05T00:00:00'), at('2026-09-20T00:00:00'), 7 * DAY_MS);
+      expect(ticks.length).toBeGreaterThan(3);
+      for (const tick of ticks) expect(new Date(tick.ms).getDay()).toBe(1);
+    });
+
+    it('좌우로 밀어도 겹치는 구간의 눈금은 같은 자리에 있다', () => {
+      const week = 7 * DAY_MS;
+      const before = generateTicks(at('2026-08-05T00:00:00'), at('2026-09-20T00:00:00'), week);
+      // 하루 반쯤 밀어 본다 — 예전에는 이만큼 눈금이 통째로 따라 움직였다
+      const after = generateTicks(at('2026-08-06T13:00:00'), at('2026-09-21T13:00:00'), week);
+      const overlap = (ticks: typeof before) =>
+        ticks.filter((tick) => tick.ms >= at('2026-08-10T00:00:00') && tick.ms <= at('2026-09-14T00:00:00')).map((t) => t.ms);
+      expect(overlap(after)).toEqual(overlap(before));
+      expect(overlap(before).length).toBeGreaterThan(3);
+    });
+
+    it('하루보다 짧은 간격은 자정에서 세므로 역시 고정이다', () => {
+      const six = 6 * HOUR_MS;
+      const before = generateTicks(at('2026-08-10T00:00:00'), at('2026-08-12T00:00:00'), six);
+      const after = generateTicks(at('2026-08-10T04:00:00'), at('2026-08-12T04:00:00'), six);
+      const overlap = (ticks: typeof before) =>
+        ticks.filter((tick) => tick.ms >= at('2026-08-10T06:00:00') && tick.ms <= at('2026-08-11T18:00:00')).map((t) => t.ms);
+      expect(overlap(after)).toEqual(overlap(before));
+    });
+  });
+
+  it('하루 경계선은 월요일을 따로 표시한다', () => {
+    const days = dayBoundaries(at('2026-08-28T00:00:00'), at('2026-09-05T00:00:00'), 960);
+    expect(days.length).toBeGreaterThan(3);
+    const mondays = days.filter((day) => day.weekStart);
+    expect(mondays).toHaveLength(1);
+    expect(new Date(mondays[0].ms).getDay()).toBe(1);
   });
 
   describe('마감 점 배치', () => {

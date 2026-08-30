@@ -10,7 +10,6 @@
  * Spark 쓰기 한도 방어: 1회 부트스트랩당 쓰기 약 250~350건.
  * DEMO_DATASET_WRITE_CAP 을 초과하는 항목을 만들지 않는다 (무한 증식 방지).
  */
-import type { EventType, ContributionWeights } from './types';
 import { DEFAULT_WEIGHTS } from './types';
 import { DEMO_CHAT, type DemoChatLine } from './demo/chat';
 import { DEMO_DOCS, DEMO_FILES, DEMO_FILE_COMMENTS, type DemoDocDef, type DemoFileDef, type DemoFileCommentDef } from './demo/docs';
@@ -27,6 +26,8 @@ import {
 } from './demo/people';
 import { DEMO_DEADLINE_TASKS, DEMO_MILESTONES, DEMO_TASKS, type DemoTaskDef } from './demo/tasks';
 import type { RelativeStamp } from './demo/stamp';
+import type { DemoDataset } from './demo/dataset-shape';
+export type { DemoDataset };
 import { estimateDemoWrites } from './demo/writes';
 
 export { estimateDemoWrites };
@@ -57,44 +58,6 @@ export type {
   DemoTaskDef,
   RelativeStamp,
 };
-
-export interface DemoDataset {
-  teamId: string;
-  archivedTeamId: string;
-  team: {
-    name: string;
-    courseLabel: string;
-    goal: string;
-    startAt: Date;
-    dueAt: Date;
-    leaderUid: string;
-    members: Record<string, { nickname: string; roleLabel: string; joinedAt: Date; studentId?: string }>;
-    weights: ContributionWeights;
-    archived: boolean;
-    deleted: boolean;
-    createdAt: Date;
-  };
-  archivedTeam: {
-    name: string;
-    courseLabel: string;
-    goal: string;
-    startAt: Date;
-    dueAt: Date;
-    leaderUid: string;
-    members: Record<string, { nickname: string; roleLabel: string; joinedAt: Date; studentId?: string }>;
-    weights: ContributionWeights;
-    archived: boolean;
-    deleted: boolean;
-    createdAt: Date;
-  };
-  events: { type: EventType; actorUid: string; payload: Record<string, unknown>; at: Date }[];
-  messages: { actorUid: string; text: string; at: Date }[];
-  tasks: { id: string; title: string; desc?: string; actorUid: string; assigneeUid: string; dueAt: Date; status: 'done' | 'todo'; doneAt?: Date; milestoneId?: string; milestoneStartAt?: Date; order: number }[];
-  docs: { title: string; versions: { body: string; charsDelta: number; actorUid: string; at: Date; version: number }[] }[];
-  files: { name: string; contentType: string; sizeBytes: number; actorUid: string; caption: string; uploadedAt: Date }[];
-  fileComments: { fileIndex: number; actorUid: string; text: string; at: Date }[];
-  meetings: { id: string; title: string; startedAt: Date; durationMin: number; place: string; online: boolean; attendeeUids: string[]; summary3: string; body: string; actorUid: string }[];
-}
 
 export function buildDemoDataset(visitorUid: string, bootstrap: Date): DemoDataset {
   const at = (rel: RelativeStamp): Date =>

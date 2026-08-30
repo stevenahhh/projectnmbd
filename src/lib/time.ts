@@ -29,9 +29,6 @@ export function dayKeyKST(value: Date | Timestamp | null | undefined): string | 
   return new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: KST }).format(date);
 }
 
-export function daysBetween(from: Date, to: Date): number {
-  return Math.round((to.getTime() - from.getTime()) / 86400000);
-}
 
 export function eachDayKeyKST(start: Date, end: Date): string[] {
   const keys: string[] = [];
@@ -45,14 +42,6 @@ export function eachDayKeyKST(start: Date, end: Date): string[] {
   return keys;
 }
 
-/** D-n 표기. 마감이 지났으면 D+n. */
-export function dDay(due: Date | Timestamp | null | undefined, now: Date = new Date()): string {
-  const date = toDate(due);
-  if (!date) return '—';
-  const diff = Math.ceil((date.getTime() - now.getTime()) / 86400000);
-  if (diff === 0) return 'D-DAY';
-  return diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
-}
 
 /** 마감 경과 판정은 저장이 아니라 렌더 시점 계산이다 (결정 D6 — 경과 이벤트는 존재하지 않음). */
 export function isOverdue(dueAt: Date | Timestamp | null | undefined, status: string, now: Date = new Date()): boolean {
