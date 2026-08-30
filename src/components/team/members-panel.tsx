@@ -31,7 +31,7 @@ export function MembersPanel({ team, leaderRequests, uid }: MembersPanelProps) {
     const label = roleDrafts[memberUid] ?? team.members[memberUid].roleLabel ?? '';
     try {
       await assignRole(team.id, uid, memberUid, label);
-      toast.success('역할 배정 — 규칙이 팀장만 통과시켰어요');
+      toast.success('역할을 배정했어요');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '역할 배정 실패');
     }
@@ -40,7 +40,7 @@ export function MembersPanel({ team, leaderRequests, uid }: MembersPanelProps) {
   const requestLeadershipFor = async (targetUid: string) => {
     try {
       await requestLeadership(team.id, uid, targetUid);
-      toast.success('팀장 지정 요청 — 상대가 승인하면 교체돼요');
+      toast.success('팀장 지정 요청을 보냈어요');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '요청 실패');
     }
@@ -50,7 +50,7 @@ export function MembersPanel({ team, leaderRequests, uid }: MembersPanelProps) {
     try {
       await approveLeadership(team.id, targetUid);
       await refreshProfile();
-      toast.success('팀장 승인 — 팀 문서 leaderUid 교체 완료');
+      toast.success('팀장이 되었어요');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '승인 실패');
     }
@@ -156,7 +156,7 @@ export function MembersPanel({ team, leaderRequests, uid }: MembersPanelProps) {
               variant="outline"
               onClick={() =>
                 void import('@/lib/teams').then((m) => m.archiveTeam(team.id, uid)).then(() => {
-                  toast.success('보관 완료 — 읽기 전용으로 전환됐어요');
+                  toast.success('보관했어요 — 이제 읽기 전용입니다');
                   void refreshProfile();
                 })
               }
@@ -166,9 +166,9 @@ export function MembersPanel({ team, leaderRequests, uid }: MembersPanelProps) {
             <Button
               variant="destructive"
               onClick={() => {
-                if (confirm('팀 전체를 통째로 삭제할까요? 기록만 골라 지우는 건 불가능해요.')) {
+                if (confirm('이 팀을 삭제할까요? 되돌릴 수 없습니다.')) {
                   void softDeleteTeam(team.id, uid).then(() => {
-                    toast.success('삭제 완료 — 목록과 대시보드에서 사라져요');
+                    toast.success('팀을 삭제했어요');
                     void refreshProfile();
                   });
                 }
@@ -177,7 +177,7 @@ export function MembersPanel({ team, leaderRequests, uid }: MembersPanelProps) {
               <Trash2 /> 팀 삭제
             </Button>
             <p className="text-muted-foreground w-full text-xs">
-              팀 전체를 통째로 치울 수는 있지만, 팀 안에서 특정 기록만 골라 지우거나 날짜를 고칠 수는 없습니다.
+              팀 전체는 삭제할 수 있지만, 팀 안의 특정 기록만 골라 지우거나 날짜를 고칠 수는 없습니다.
             </p>
           </CardContent>
         </Card>

@@ -28,11 +28,11 @@ const STEPS = [
     },
   },
   {
-    element: '#tutorial-ledger',
+    element: '#tutorial-timeline',
     popover: {
-      title: '활동 원장 배지',
+      title: '고칠 수 없는 기록',
       description:
-        '이 기록들은 추가만 되고 수정·삭제가 데이터베이스 규칙 자체로 막혀 있습니다. 도구는 기록하고, 판단은 팀이 합니다',
+        '여기 쌓인 기록은 추가만 되고, 수정·삭제가 데이터베이스 규칙으로 막혀 있습니다. 도구는 기록하고, 판단은 팀이 합니다',
     },
   },
   {

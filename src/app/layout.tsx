@@ -9,11 +9,11 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
-  title: '팀플 원장 — 쓰기만 하면 기여가 남는 팀플 공간',
-  description: '동료평가 칸 앞에서 카톡을 다시 올리지 마세요. 문서·자료·할 일·대화가 한 곳에, 기여도는 자동으로.',
+  title: '팀플 — 팀 프로젝트를 한 곳에서',
+  description: '문서·자료·할 일·대화를 한 곳에서. 누가 무엇을 했는지는 자동으로 정리됩니다.',
   openGraph: {
-    title: '팀플 원장 — 쓰기만 하면 기여가 남는 팀플 공간',
-    description: '동료평가 칸 앞에서 카톡을 다시 올리지 마세요. 문서·자료·할 일·대화가 한 곳에, 기여도는 자동으로.',
+    title: '팀플 — 팀 프로젝트를 한 곳에서',
+    description: '문서·자료·할 일·대화를 한 곳에서. 누가 무엇을 했는지는 자동으로 정리됩니다.',
     images: ['/og.png'],
     type: 'website',
   },

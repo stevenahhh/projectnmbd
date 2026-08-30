@@ -40,7 +40,7 @@ export function ChatPanel({ team, messages, uid }: ChatPanelProps) {
   return (
     <Card className="flex h-[70vh] flex-col">
       <CardHeader>
-        <CardTitle className="text-base">대화 — 팀플 이야기가 여기 기록됩니다</CardTitle>
+        <CardTitle className="text-base">대화</CardTitle>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-3">
         <ScrollArea className="min-h-0 flex-1 pr-3">

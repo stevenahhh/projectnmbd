@@ -29,6 +29,7 @@ import { FilesPanel } from './files-panel';
 import { GanttPanel } from './gantt-panel';
 import { MembersPanel } from './members-panel';
 import { Tutorial } from './tutorial';
+import { TeamSwitcher } from './team-switcher';
 import type { Team, TeamTask } from '@/lib/types';
 
 const TABS = ['dashboard', 'tasks', 'chat', 'meetings', 'docs', 'files', 'gantt', 'members'] as const;
@@ -91,7 +92,7 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
     seen.current = new Set([...seen.current, ...fresh.map((n) => n.id)]);
     if (notifyGranted) {
       for (const n of fresh.slice(0, 2)) {
-        new Notification('팀플 원장', { body: n.message });
+        new Notification('팀플', { body: n.message });
       }
     }
   }, [notifications, notifyGranted]);
@@ -105,7 +106,7 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
   if (!data.team) {
     return (
       <div className="p-10 text-center">
-        <p className="text-sm">팀을 찾을 수 없거나 접근 권한이 없어요 (비멤버 읽기는 규칙이 차단합니다).</p>
+        <p className="text-sm">팀을 찾을 수 없거나 접근 권한이 없어요.</p>
         <Button asChild variant="link">
           <Link href="/teams">내 팀 목록으로</Link>
         </Button>
@@ -171,14 +172,15 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
       {/* 사이드바 — 데스크톱 전용 */}
       <aside className="bg-card sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r p-3 lg:flex">
         <Link href="/" className="hover:bg-muted rounded-md px-2 py-1.5 text-lg font-bold tracking-tight">
-          팀플 원장
+          팀플
         </Link>
-        <div className="mt-4 px-2">
-          <p className="truncate text-sm font-semibold">{team.name}</p>
-          <p className="text-muted-foreground mt-0.5 truncate text-xs">
-            {team.courseLabel || team.goal}
-            {team.archived ? <Badge variant="secondary" className="ml-1.5">보관됨</Badge> : null}
-          </p>
+        <div className="mt-4">
+          <TeamSwitcher current={team} />
+          {team.archived ? (
+            <Badge variant="secondary" className="mt-2 ml-1">
+              보관됨 — 읽기 전용
+            </Badge>
+          ) : null}
         </div>
         <nav className="mt-4 flex flex-col gap-0.5">{navItems}</nav>
         <div className="mt-auto flex flex-col gap-0.5 border-t pt-3">
@@ -216,8 +218,9 @@ export function TeamWorkspace({ teamId, initialTab = 'dashboard' }: { teamId: st
           </div>
         </header>
 
-        {/* 모바일 탭 내비게이션 */}
-        <div className="border-b px-4 py-2 lg:hidden">
+        {/* 모바일 팀 전환 + 탭 내비게이션 */}
+        <div className="flex flex-col gap-2 border-b px-4 py-2 lg:hidden">
+          <TeamSwitcher current={team} />
           <Tabs value={tab} onValueChange={(v) => setTab(v as WorkspaceTab)}>
             <TabsList className="flex w-full flex-wrap">
               {TABS.map((t) => (

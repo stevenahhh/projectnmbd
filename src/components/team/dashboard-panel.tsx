@@ -5,7 +5,6 @@ import { Download } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { aggregateContribution, type AggregatableEvent, type AggregatableTask } from '@/lib/contribution';
 import { formatKST } from '@/lib/time';
@@ -24,6 +23,7 @@ interface DashboardPanelProps {
 export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
   // 렌더 도중 Date.now() 를 부르는 것은 순수성 위반 — 마운트 시점 한 번만 캡처한다.
   const [now] = useState(() => new Date());
 
@@ -48,9 +48,9 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
       weights: team.weights,
       startAt: team.startAt.toDate(),
       dueAt: team.dueAt.toDate(),
-      now: new Date(),
+      now,
     });
-  }, [team, events, tasks]);
+  }, [team, events, tasks, now]);
 
   const exportPng = async (excludeImages: boolean) => {
     if (!surfaceRef.current) return;
@@ -78,13 +78,7 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
         <Card id="tutorial-bars">
           <CardHeader className="flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-lg">기여도 — {team.name}</CardTitle>
-              <p className="text-muted-foreground mt-1 text-sm">
-                {team.goal} · D-{Math.max(0, Math.ceil((team.dueAt.toDate().getTime() - now.getTime()) / 86400000))} · 가중치 (문서 {team.weights.doc} / 자료 {team.weights.file} / 할 일 {team.weights.task} / 회의 {team.weights.meeting} / 수동 {team.weights.note}) · 활동일은 참고축
-              </p>
-              <Badge id="tutorial-ledger" variant="secondary" className="mt-2">
-                활동 원장 — 서버 시각 기록 · 추가만 가능
-              </Badge>
+              <CardTitle className="text-lg">기여도</CardTitle>
             </div>
             <div className="flex gap-2" data-no-export>
               <Button id="tutorial-export" size="sm" onClick={() => void exportPng(false)} disabled={exporting}>
@@ -133,18 +127,16 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
 
             {result.concentrated ? (
               <p className="text-muted-foreground text-xs">
-                분포: 최다 기여자 비중 {Math.round(result.topShare * 100)}% — 수치는 사실이고 해석은 팀이 합니다
+                최다 기여자 비중 {Math.round(result.topShare * 100)}%
               </p>
             ) : null}
           </CardContent>
         </Card>
 
         <Card id="tutorial-timeline">
-          <CardHeader>
-            <CardTitle className="text-base">시간축 (서버 시각 · {formatKST(team.startAt, 'date')} ~)</CardTitle>
-            <p className="text-muted-foreground text-xs">
-              총량은 몰아 적어 부풀릴 수 있지만, 서버가 찍은 시각은 못 바꿉니다
-            </p>
+          <CardHeader className="flex-row items-center justify-between gap-2">
+            <CardTitle className="text-base">활동 시간축 · {formatKST(team.startAt, 'date')} ~</CardTitle>
+            <span className="text-muted-foreground min-h-5 text-xs tabular-nums">{hovered ?? ''}</span>
           </CardHeader>
           <CardContent className="flex flex-col gap-2.5 overflow-x-auto">
             {result.members.map((member) => (
@@ -154,7 +146,7 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
                   {result.timelineDays.map((day) => {
                     const count = result.timeline[member.uid]?.[day] ?? 0;
                     const [y, m, d] = day.split('-');
-                    const label = `${Number(y)}. ${Number(m)}. ${Number(d)} - ${count}개 활동`;
+                    const label = `${team.members[member.uid].nickname} · ${Number(y)}. ${Number(m)}. ${Number(d)} - ${count}개 활동`;
                     const color =
                       count === 0
                         ? 'bg-muted'
@@ -165,7 +157,18 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
                             : count <= 10
                               ? 'bg-primary/75'
                               : 'bg-primary';
-                    return <span key={day} title={label} className={`size-3 shrink-0 rounded-[2px] ${color}`} />;
+                    return (
+                      <span
+                        key={day}
+                        title={label}
+                        onMouseEnter={() => setHovered(label)}
+                        onMouseLeave={() => setHovered(null)}
+                        onFocus={() => setHovered(label)}
+                        onBlur={() => setHovered(null)}
+                        tabIndex={0}
+                        className={`hover:ring-primary/60 size-3 shrink-0 cursor-pointer rounded-[2px] outline-none hover:ring-2 focus-visible:ring-2 ${color}`}
+                      />
+                    );
                   })}
                 </div>
               </div>

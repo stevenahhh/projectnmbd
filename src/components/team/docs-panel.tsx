@@ -1,14 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileText, Lock, Plus, Save } from 'lucide-react';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { FileText, History, Lock, Plus, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { getDb } from '@/lib/firebase/client';
 import { createTeamDoc, saveTeamDoc, setDocLock } from '@/lib/team-ops';
-import type { Team, TeamDoc } from '@/lib/types';
+import { formatKST } from '@/lib/time';
+import type { DocVersion, Team, TeamDoc } from '@/lib/types';
 
 interface DocsPanelProps {
   team: Team;
@@ -47,6 +51,26 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [newTitle, setNewTitle] = useState('');
   const [creating, setCreating] = useState(false);
+  const [versionState, setVersionState] = useState<{ docId: string | null; list: DocVersion[] }>({ docId: null, list: [] });
+  const [preview, setPreview] = useState<DocVersion | null>(null);
+
+  // 선택한 문서의 이전 버전 목록 — 팀 스코프 구독
+  useEffect(() => {
+    if (!selectedId) return;
+    const unsub = onSnapshot(
+      query(collection(getDb(), 'teams', team.id, 'docs', selectedId, 'versions'), orderBy('version', 'desc')),
+      (snap) =>
+        setVersionState({
+          docId: selectedId,
+          list: snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<DocVersion, 'id'>) })),
+        }),
+      () => setVersionState({ docId: selectedId, list: [] }),
+    );
+    return () => unsub();
+  }, [selectedId, team.id]);
+
+  // 다른 문서를 고른 직후에는 이전 문서의 버전을 보여주지 않는다
+  const versions = versionState.docId === selectedId ? versionState.list : [];
 
   const draft = selected ? (drafts[selected.id] ?? selected.body) : '';
   const setDraft = (value: string) => {
@@ -58,7 +82,7 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
     if (!selected) return;
     try {
       await saveTeamDoc(team.id, uid, selected, draft);
-      toast.success(`버전 ${selected.latestVersion + 1} 저장 — 누가·언제·몇 자 남았어요`);
+      toast.success(`버전 ${selected.latestVersion + 1}로 저장했어요`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '저장 실패');
     }
@@ -74,7 +98,7 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
       setSelectedId(id);
       setCreating(false);
       setNewTitle('');
-      toast.success('문서 생성 — 첫 버전이 기록됐어요');
+      toast.success('문서를 만들었어요');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '생성 실패');
     }
@@ -128,16 +152,43 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
             </div>
             {lockedByOther ? (
               <p className="text-destructive flex items-center gap-1 text-xs">
-                <Lock className="size-3" /> {team.members[selected.lockedBy!]?.nickname ?? '다른 사람'}님이 편집 중입니다 — 동시편집 없음
+                <Lock className="size-3" /> {team.members[selected.lockedBy!]?.nickname ?? '다른 사람'}님이 편집 중이에요
               </p>
             ) : (
               <p className="text-muted-foreground text-xs">
-                최신 버전 {selected.latestVersion} · 저장할 때마다 누가·언제·몇 자가 기록됩니다
+                최신 버전 {selected.latestVersion} · 저장하면 이전 버전이 그대로 남습니다
               </p>
             )}
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-4">
             <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={18} disabled={Boolean(lockedByOther)} className="font-mono text-sm" />
+
+            <div className="flex flex-col gap-1.5">
+              <p className="flex items-center gap-1.5 text-sm font-medium">
+                <History className="size-4" /> 이전 버전 {versions.length}개
+              </p>
+              <div className="flex flex-col divide-y rounded-md border">
+                {versions.map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => setPreview(v)}
+                    className="hover:bg-muted flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-xs"
+                  >
+                    <span className="font-medium">버전 {v.version}</span>
+                    <span className="text-muted-foreground flex-1 truncate">
+                      {team.members[v.actorUid]?.nickname ?? '알 수 없음'} · {formatKST(v.at)}
+                    </span>
+                    <span className={v.charsDelta >= 0 ? 'text-primary tabular-nums' : 'text-muted-foreground tabular-nums'}>
+                      {v.charsDelta >= 0 ? '+' : ''}
+                      {v.charsDelta.toLocaleString()}자
+                    </span>
+                  </button>
+                ))}
+                {versions.length === 0 ? (
+                  <p className="text-muted-foreground px-3 py-4 text-center text-xs">아직 저장된 버전이 없어요</p>
+                ) : null}
+              </div>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -147,6 +198,32 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={Boolean(preview)} onOpenChange={(open) => (!open ? setPreview(null) : undefined)}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selected?.title} · 버전 {preview?.version}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-muted-foreground text-xs">
+            {preview ? `${team.members[preview.actorUid]?.nickname ?? '알 수 없음'} · ${formatKST(preview.at)}` : ''}
+          </p>
+          <pre className="bg-muted max-h-[55vh] overflow-auto rounded-md p-3 text-xs whitespace-pre-wrap">{preview?.body}</pre>
+          {preview && !lockedByOther ? (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDraft(preview.body);
+                setPreview(null);
+                toast.success(`버전 ${preview.version} 내용을 편집기로 불러왔어요 — 저장하면 새 버전이 됩니다`);
+              }}
+            >
+              이 버전 내용 불러오기
+            </Button>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

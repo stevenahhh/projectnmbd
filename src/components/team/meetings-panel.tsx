@@ -53,7 +53,7 @@ export function MeetingsPanel({ team, meetings, uid, hasAiKey }: MeetingsPanelPr
       setTitle('');
       setSummary3('');
       setBody('');
-      toast.success('회의록 저장 — 정형 문서로 렌더됐어요');
+      toast.success('회의록을 저장했어요');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '저장 실패');
     }
@@ -141,7 +141,7 @@ export function MeetingsPanel({ team, meetings, uid, hasAiKey }: MeetingsPanelPr
                   size="sm"
                   variant={meeting.attendeeUids.includes(uid) ? 'secondary' : 'outline'}
                   onClick={() =>
-                    void checkAttend(team.id, uid, meeting).then(() => toast.success('참석 기록 — 원장에 남았어요'))
+                    void checkAttend(team.id, uid, meeting).then(() => toast.success('참석으로 기록했어요'))
                   }
                 >
                   <CalendarCheck /> {meeting.attendeeUids.includes(uid) ? '참석함' : '참석 체크'}

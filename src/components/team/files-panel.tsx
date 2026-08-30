@@ -64,7 +64,7 @@ export function FilesPanel({ team, files, uid }: FilesPanelProps) {
       setOpen(false);
       setCaption('');
       if (fileInputRef.current) fileInputRef.current.value = '';
-      toast.success('업로드 완료 — 기록이 남았어요');
+      toast.success('업로드했어요');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '업로드 실패');
     } finally {
@@ -78,7 +78,7 @@ export function FilesPanel({ team, files, uid }: FilesPanelProps) {
       await commentOnFile(team.id, uid, commentTarget.id, commentText.trim());
       setCommentTarget(null);
       setCommentText('');
-      toast.success('첨삭 기록 — 삭제 경로는 없어요');
+      toast.success('첨삭을 남겼어요');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '첨삭 실패');
     }
