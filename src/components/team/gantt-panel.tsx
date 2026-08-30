@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useFitHeight } from '@/hooks/use-fit-height';
+import { useBoxSize, useFitHeight } from '@/hooks/use-fit-height';
 import { useTimelineDrag } from '@/hooks/use-timeline-drag';
 import { useTimelineLayout } from '@/hooks/use-timeline-layout';
 import { useTimelineView } from '@/hooks/use-timeline-view';
@@ -23,6 +23,9 @@ import { TimelineChart } from './timeline-chart';
 import { TimelineEditDialog, TimelineHistoryDialog, type TimelineForm } from './timeline-dialogs';
 import { TimelineToolbar } from './timeline-toolbar';
 
+/** 가로 최소 폭(min-w-[760px])과 같은 값 — 좁은 화면에서 실제 렌더 폭이 여기서 멈춘다. */
+const MIN_CHART_PX = 760;
+
 interface GanttPanelProps {
   team: Team;
   tasks: TeamTask[];
@@ -38,8 +41,10 @@ interface GanttPanelProps {
 export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   // 카드는 화면 아래끝까지만 차지하고, 넘치는 차트는 안쪽에서 스크롤한다
   const cardHeight = useFitHeight(cardRef);
+  const contentBox = useBoxSize(contentRef);
   // 렌더 도중 Date.now() 를 부르는 것은 순수성 위반 — 마운트 시점 한 번만 캡처한다.
   const [nowMs] = useState(() => Date.now());
   const [editing, setEditing] = useState<TeamTask | null>(null);
@@ -77,6 +82,17 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
     [events],
   );
 
+  /**
+   * 그리는 높이 — 남는 세로 공간까지 캔버스로 쓴다. 세로선이 카드 아래끝까지 내려간다.
+   * viewBox 단위는 가로 폭으로 정해지므로 (여백 픽셀 / 실제 렌더 폭) × 960 으로 환산한다.
+   */
+  const drawHeight = useMemo(() => {
+    if (!contentBox || contentBox.width <= 0) return height;
+    const renderedWidth = Math.max(contentBox.width, MIN_CHART_PX);
+    // 딱 맞을 때 스크롤바가 생겨 폭이 다시 줄지 않도록 2px 만 남긴다
+    return Math.max(height, Math.round(((contentBox.height - 2) / renderedWidth) * VIEW_WIDTH));
+  }, [contentBox, height]);
+
   const { drag, beginDrag } = useTimelineDrag({
     team,
     uid,
@@ -86,7 +102,7 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
     pxToMs,
     snapStep: snapStepFor(rangeMs, VIEW_WIDTH),
     chartTop,
-    height,
+    height: drawHeight,
     svgRef,
     onBubble: setBubble,
   });
@@ -155,11 +171,11 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
         />
       </CardHeader>
 
-      <CardContent className="min-h-0 flex-1 overflow-auto">
+      <CardContent ref={contentRef} className="min-h-0 flex-1 overflow-auto">
         <svg
           id="tut-timeline-chart"
           ref={svgRef}
-          viewBox={`0 0 ${VIEW_WIDTH} ${height}`}
+          viewBox={`0 0 ${VIEW_WIDTH} ${drawHeight}`}
           className="min-w-[760px] touch-none select-none"
           role="img"
           aria-label="타임라인"
@@ -168,7 +184,7 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
             x={0}
             y={0}
             width={VIEW_WIDTH}
-            height={height}
+            height={drawHeight}
             fill="transparent"
             className={pan ? 'cursor-grabbing' : 'cursor-grab'}
             onPointerDown={(event) => setPan({ pointerX: event.clientX, startMs: view.startMs, endMs: view.endMs })}
@@ -177,13 +193,13 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
           <g>
             <TimelineAxis
               ticks={ticks}
-            dayLines={dayLines}
-            markers={markers}
-            markerRows={markerRows}
-            showMarkerLabel={showMarkerLabel}
-            height={height}
-            nowMs={nowMs}
-            x={x}
+              dayLines={dayLines}
+              markers={markers}
+              markerRows={markerRows}
+              showMarkerLabel={showMarkerLabel}
+              height={drawHeight}
+              nowMs={nowMs}
+              x={x}
               inView={(ms) => ms >= view.startMs && ms <= view.endMs}
               onBubble={setBubble}
             />
@@ -192,7 +208,7 @@ export function GanttPanel({ team, tasks, events, uid }: GanttPanelProps) {
           <TimelineChart
             rows={rows.map((row) => ({ ...row, item: row.item.task }))}
             chartTop={chartTop}
-            height={height}
+            height={drawHeight}
             archived={Boolean(team.archived)}
             drag={drag}
             x={x}
