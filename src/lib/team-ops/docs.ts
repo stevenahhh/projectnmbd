@@ -55,3 +55,31 @@ export async function setDocLock(teamId: string, docId: string, uid: string | nu
     lockedAt: uid ? serverTimestamp() : null,
   });
 }
+
+/** 문서 삭제(보관) — 작성자·팀장만(규칙이 가드). 버전 문서들은 그대로 남는다. */
+export async function softDeleteDoc(teamId: string, uid: string, teamDoc: TeamDoc): Promise<void> {
+  const db = getDb();
+  await writeEvent(db, {
+    teamId,
+    actorUid: uid,
+    type: 'doc.delete',
+    payload: { docId: teamDoc.id, docTitle: teamDoc.title },
+    mutations: [
+      { kind: 'update', ref: doc(db, 'teams', teamId, 'docs', teamDoc.id), data: { deleted: true, deletedAt: serverTimestamp() } },
+    ],
+  });
+}
+
+/** 문서 복원 — 팀장만(규칙이 가드). */
+export async function restoreDoc(teamId: string, uid: string, teamDoc: TeamDoc): Promise<void> {
+  const db = getDb();
+  await writeEvent(db, {
+    teamId,
+    actorUid: uid,
+    type: 'doc.restore',
+    payload: { docId: teamDoc.id, docTitle: teamDoc.title },
+    mutations: [
+      { kind: 'update', ref: doc(db, 'teams', teamId, 'docs', teamDoc.id), data: { deleted: false, deletedAt: null } },
+    ],
+  });
+}

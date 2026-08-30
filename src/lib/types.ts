@@ -10,7 +10,10 @@ export type EventType =
   | 'meeting.create'
   | 'meeting.attend'
   | 'meeting.update'
+  | 'meeting.delete'
   | 'meeting.restore'
+  | 'doc.delete'
+  | 'doc.restore'
   | 'message.post'
   | 'note.add'
   | 'team.create'
@@ -127,6 +130,8 @@ export interface TeamDoc {
   updatedBy: string;
   lockedBy?: string | null;
   lockedAt?: Timestamp | null;
+  deleted?: boolean;
+  deletedAt?: Timestamp | null;
 }
 
 export interface DocVersion {

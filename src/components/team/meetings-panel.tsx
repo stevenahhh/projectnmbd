@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarCheck, ClipboardList, History, Pencil } from 'lucide-react';
+import { CalendarCheck, ClipboardList, History, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Markdown } from '@/components/markdown';
-import { checkAttend } from '@/lib/team-ops';
+import { checkAttend, restoreMeeting, softDeleteMeeting } from '@/lib/team-ops';
 import { formatKST } from '@/lib/time';
 import type { Meeting, Team } from '@/lib/types';
 import { MeetingCompose } from './meeting-compose';
@@ -25,6 +26,8 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
   const [reading, setReading] = useState<Meeting | null>(null);
   const [editing, setEditing] = useState<Meeting | null>(null);
   const [versionsOpen, setVersionsOpen] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const attend = async (meeting: Meeting) => {
     try {
@@ -45,16 +48,27 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
         <MeetingCompose key={editing.id} team={team} uid={uid} meeting={editing} onClose={() => setEditing(null)} />
       ) : null}
 
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" variant={showDeleted ? 'ghost' : 'secondary'} onClick={() => setShowDeleted(false)}>
+          전체 {meetings.filter((m) => !m.deleted).length}
+        </Button>
+        <Button size="sm" variant={showDeleted ? 'secondary' : 'ghost'} onClick={() => setShowDeleted(true)}>
+          삭제된 {meetings.filter((m) => m.deleted).length}
+        </Button>
+      </div>
+
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {meetings.map((meeting) => (
+        {meetings.filter((meeting) => (showDeleted ? meeting.deleted : !meeting.deleted)).map((meeting) => (
           <div
             key={meeting.id}
-            id={meeting.id === meetings[0]?.id ? 'tut-meeting-card' : undefined}
+            id={meeting.id === meetings[0]?.id && !meeting.deleted ? 'tut-meeting-card' : undefined}
             role="button"
             tabIndex={0}
-            onClick={() => setReading(meeting)}
-            onKeyDown={(e) => (e.key === 'Enter' ? setReading(meeting) : undefined)}
-            className="bg-card hover:border-primary/50 flex cursor-pointer flex-col gap-2 rounded-xl border p-4 text-left shadow-sm transition-all hover:shadow-md"
+            onClick={() => (meeting.deleted ? undefined : setReading(meeting))}
+            onKeyDown={(e) => (e.key === 'Enter' && !meeting.deleted ? setReading(meeting) : undefined)}
+            className={`bg-card flex flex-col gap-2 rounded-xl border p-4 text-left shadow-sm transition-all ${
+              meeting.deleted ? 'opacity-60' : 'hover:border-primary/50 cursor-pointer hover:shadow-md'
+            }`}
           >
             <div className="flex items-start justify-between gap-2">
               <span className="line-clamp-2 text-sm font-semibold">{meeting.title}</span>
@@ -65,34 +79,55 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
               {meeting.editedAt ? <span className="ml-1.5 text-[10px]">수정됨</span> : null}
             </p>
             <SummaryLines summary3={meeting.summary3} compact />
-            <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-              <p className="text-muted-foreground text-[11px]">
-                참석 {meeting.attendeeUids.length}명
-                {meeting.attendeeUids.length > 0
-                  ? ` · ${meeting.attendeeUids
-                      .slice(0, 3)
-                      .map((a) => team.members[a]?.nickname ?? '—')
-                      .join(', ')}${meeting.attendeeUids.length > 3 ? ' 외' : ''}`
-                  : ''}
-              </p>
-              {meeting.attendeeUids.includes(uid) ? (
-                <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-                  <CalendarCheck className="size-3.5" /> 참석함
-                </span>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="h-7 text-xs"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void attend(meeting);
-                  }}
-                >
-                  <CalendarCheck /> 참석 체크
-                </Button>
-              )}
-            </div>
+            {meeting.deleted ? (
+              <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+                <span className="text-muted-foreground text-[11px]">삭제(보관)됨 — 버전 포함 원본 보존</span>
+                {team.leaderUid === uid ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void restoreMeeting(team.id, uid, meeting).then(() => toast.success('다시 사용할 수 있어요'));
+                    }}
+                  >
+                    복원
+                  </Button>
+                ) : (
+                  <span className="text-muted-foreground text-[11px]">팀장만 복원할 수 있어요</span>
+                )}
+              </div>
+            ) : (
+              <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+                <p className="text-muted-foreground text-[11px]">
+                  참석 {meeting.attendeeUids.length}명
+                  {meeting.attendeeUids.length > 0
+                    ? ` · ${meeting.attendeeUids
+                        .slice(0, 3)
+                        .map((a) => team.members[a]?.nickname ?? '—')
+                        .join(', ')}${meeting.attendeeUids.length > 3 ? ' 외' : ''}`
+                    : ''}
+                </p>
+                {meeting.attendeeUids.includes(uid) ? (
+                  <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
+                    <CalendarCheck className="size-3.5" /> 참석함
+                  </span>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-7 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void attend(meeting);
+                    }}
+                  >
+                    <CalendarCheck /> 참석 체크
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         ))}
         {meetings.length === 0 ? (
@@ -145,6 +180,24 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
               </section>
 
               <div className="flex flex-wrap items-center gap-2">
+                {!reading.deleted && (reading.actorUid === uid || team.leaderUid === uid) ? (
+                  <Button variant="outline" className="text-destructive" onClick={() => setConfirmDelete(true)}>
+                    <Trash2 /> 삭제
+                  </Button>
+                ) : null}
+                <ConfirmDialog
+                  open={confirmDelete}
+                  onOpenChange={setConfirmDelete}
+                  title="이 회의록을 삭제할까요?"
+                  description="원본은 '삭제된 회의록'에 보관됩니다. 버전 포함 그대로 남고, 팀장이 언제든 복원할 수 있어요."
+                  confirmLabel="삭제(보관)"
+                  destructive
+                  onConfirm={async () => {
+                    await softDeleteMeeting(team.id, uid, reading);
+                    toast.success('삭제(보관)했어요');
+                    setReading(null);
+                  }}
+                />
                 <Button variant="outline" onClick={() => { setReading(null); setEditing(reading); }}>
                   <Pencil /> 수정
                 </Button>

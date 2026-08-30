@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
-import { FileText, History, Lock, Plus, Save } from 'lucide-react';
+import { FileText, History, Lock, Plus, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { RichEditor } from '@/components/ui/rich-editor';
 import { getDb } from '@/lib/firebase/client';
-import { createTeamDoc, saveTeamDoc, setDocLock } from '@/lib/team-ops';
+import { createTeamDoc, saveTeamDoc, setDocLock, restoreDoc, softDeleteDoc } from '@/lib/team-ops';
 import { formatKST } from '@/lib/time';
 import type { DocVersion, Team, TeamDoc } from '@/lib/types';
 
@@ -53,6 +54,7 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
   const [creating, setCreating] = useState(false);
   const [versionState, setVersionState] = useState<{ docId: string | null; list: DocVersion[] }>({ docId: null, list: [] });
   const [preview, setPreview] = useState<DocVersion | null>(null);
+  const [docConfirm, setDocConfirm] = useState(false);
 
   // 선택한 문서의 이전 버전 목록 — 팀 스코프 구독
   useEffect(() => {
@@ -122,7 +124,7 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
               </Button>
             </div>
           ) : null}
-          {docs.map((doc) => (
+          {docs.filter((doc) => !doc.deleted).map((doc) => (
             <button
               key={doc.id}
               className={
@@ -141,6 +143,32 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
         </CardContent>
       </Card>
 
+      {docs.some((doc) => doc.deleted) ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">삭제된 문서 {docs.filter((doc) => doc.deleted).length}개</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-1.5">
+            {docs.filter((doc) => doc.deleted).map((doc) => (
+              <div key={doc.id} className="hover:bg-muted flex items-center gap-2 rounded-md px-2.5 py-2 text-sm">
+                <FileText className="text-muted-foreground size-4 shrink-0" />
+                <span className="text-muted-foreground flex-1 truncate">{doc.title}</span>
+                <span className="text-muted-foreground text-[11px]">삭제(보관)됨</span>
+                {team.leaderUid === uid ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void restoreDoc(team.id, uid, doc).then(() => toast.success('복원했어요'))}
+                  >
+                    복원
+                  </Button>
+                ) : null}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
+
       {selected ? (
         <Card>
           <CardHeader>
@@ -149,6 +177,24 @@ export function DocsPanel({ team, docs, uid }: DocsPanelProps) {
               <Button id="tut-doc-save" size="sm" onClick={() => void save()} disabled={Boolean(lockedByOther)}>
                 <Save /> 저장 (버전 {selected.latestVersion + 1})
               </Button>
+              {(selected.updatedBy === uid || team.leaderUid === uid) && !lockedByOther ? (
+                <Button size="sm" variant="outline" className="text-destructive" onClick={() => setDocConfirm(true)}>
+                  <Trash2 /> 삭제
+                </Button>
+              ) : null}
+              <ConfirmDialog
+                open={docConfirm}
+                onOpenChange={setDocConfirm}
+                title="이 문서를 삭제할까요?"
+                description="원본은 '삭제된 문서'에 보관됩니다. 버전 포함 그대로 남고, 팀장이 언제든 복원할 수 있어요."
+                confirmLabel="삭제(보관)"
+                destructive
+                onConfirm={async () => {
+                  await softDeleteDoc(team.id, uid, selected);
+                  toast.success('삭제(보관)했어요');
+                  setSelectedId(null);
+                }}
+              />
             </div>
             {lockedByOther ? (
               <p className="text-destructive flex items-center gap-1 text-xs">

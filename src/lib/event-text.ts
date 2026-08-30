@@ -11,6 +11,10 @@ export function describeEvent(type: EventType, payload: Record<string, unknown>)
   const name = text('docTitle') || text('title') || text('fileName') || text('name') || text('text');
 
   switch (type) {
+    case 'doc.delete':
+      return `문서 「${name || '문서'}」 삭제(보관)`;
+    case 'doc.restore':
+      return `문서 「${name || '문서'}」 복원`;
     case 'doc.edit': {
       const delta = num('charsDelta');
       return `문서 「${name || '제목 없음'}」 ${delta >= 0 ? '+' : ''}${delta.toLocaleString()}자`;
@@ -31,6 +35,8 @@ export function describeEvent(type: EventType, payload: Record<string, unknown>)
       return `회의 「${name || '회의'}」 수정`;
     case 'meeting.restore':
       return `회의 「${name || '회의'}」 복원`;
+    case 'meeting.delete':
+      return `회의 「${name || '회의'}」 삭제(보관)`;
     case 'message.post':
       return `대화 ${num('chars')}자`;
     case 'note.add':

@@ -94,3 +94,17 @@ export async function checkAttend(teamId: string, uid: string, meeting: Meeting)
     ],
   });
 }
+
+/** 회의록 삭제(보관) — 작성자·팀장만(규칙이 가드). 원본은 그대로 있고 '삭제된 회의록'에 남는다. */
+export async function softDeleteMeeting(teamId: string, uid: string, meeting: Meeting): Promise<void> {
+  const db = getDb();
+  await writeEvent(db, {
+    teamId,
+    actorUid: uid,
+    type: 'meeting.delete',
+    payload: { meetingId: meeting.id, title: meeting.title },
+    mutations: [
+      { kind: 'update', ref: doc(db, 'teams', teamId, 'meetings', meeting.id), data: { deleted: true, deletedAt: serverTimestamp() } },
+    ],
+  });
+}
