@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import { Activity, CalendarClock, CheckCircle2, Download, Timer } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -14,8 +14,10 @@ import {
   type AggregatableTask,
 } from '@/lib/contribution';
 import { formatKST } from '@/lib/time';
-import { ContributionPie } from './contribution-pie';
 import type { LedgerEvent, Team, TeamTask } from '@/lib/types';
+import { ActivityHeatmap } from './activity-heatmap';
+import { ContributionPie } from './contribution-pie';
+import { DashboardStats } from './dashboard-stats';
 
 interface DashboardPanelProps {
   team: Team;
@@ -23,65 +25,28 @@ interface DashboardPanelProps {
   tasks: TeamTask[];
 }
 
-interface Bubble {
-  x: number;
-  y: number;
-  who: string;
-  day: string;
-  count: number;
-  items: string[];
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  hint,
-}: {
-  icon: typeof Activity;
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <Card className="gap-2 py-4">
-      <CardContent className="flex items-center gap-3 px-4">
-        <span className="bg-secondary text-secondary-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
-          <Icon className="size-4.5" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-muted-foreground text-xs">{label}</p>
-          <p className="truncate text-lg font-semibold tabular-nums">{value}</p>
-          {hint ? <p className="text-muted-foreground truncate text-[11px]">{hint}</p> : null}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
+/** 홈 — 기여 분포와 활동 시간축, 그리고 동료평가에 낼 한 장. */
 export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
-  const [bubble, setBubble] = useState<Bubble | null>(null);
   // 렌더 도중 Date.now() 를 부르는 것은 순수성 위반 — 마운트 시점 한 번만 캡처한다.
   const [now] = useState(() => new Date());
 
   const result = useMemo(() => {
-    const memberUids = Object.keys(team.members);
-    const aggregatableEvents: AggregatableEvent[] = events.map((e) => ({
-      actorUid: e.actorUid,
-      type: e.type,
-      payload: e.payload ?? {},
-      at: e.at ? e.at.toDate() : null,
+    const aggregatableEvents: AggregatableEvent[] = events.map((event) => ({
+      actorUid: event.actorUid,
+      type: event.type,
+      payload: event.payload ?? {},
+      at: event.at ? event.at.toDate() : null,
     }));
-    const aggregatableTasks: AggregatableTask[] = tasks.map((t) => ({
-      id: t.id,
-      assigneeUid: t.assigneeUid,
-      dueAt: t.dueAt.toDate(),
-      status: t.status,
+    const aggregatableTasks: AggregatableTask[] = tasks.map((task) => ({
+      id: task.id,
+      assigneeUid: task.assigneeUid,
+      dueAt: task.dueAt.toDate(),
+      status: task.status,
     }));
     return aggregateContribution({
-      memberUids,
+      memberUids: Object.keys(team.members),
       events: aggregatableEvents,
       tasks: aggregatableTasks,
       weights: team.weights,
@@ -91,23 +56,10 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
     });
   }, [team, events, tasks, now]);
 
-  const stats = useMemo(() => {
-    const openTasks = tasks.filter((t) => t.status !== 'done');
-    const soon = openTasks.filter((t) => {
-      const due = t.dueAt.toDate().getTime();
-      return due >= now.getTime() && due - now.getTime() <= 48 * 3600_000;
-    });
-    const overdue = openTasks.filter((t) => t.dueAt.toDate().getTime() < now.getTime());
-    const weekAgo = now.getTime() - 7 * 86400_000;
-    const weekEvents = events.filter((e) => (e.at ? e.at.toDate().getTime() >= weekAgo : false));
-    const remainDays = Math.ceil((team.dueAt.toDate().getTime() - now.getTime()) / 86400000);
-    return { openTasks, soon, overdue, weekEvents, remainDays };
-  }, [tasks, events, team, now]);
-
   const recent = useMemo(
     () =>
-      [...events]
-        .filter((e) => e.at)
+      events
+        .filter((event) => event.at)
         .sort((a, b) => (b.at?.toDate().getTime() ?? 0) - (a.at?.toDate().getTime() ?? 0))
         .slice(0, 10),
     [events],
@@ -133,34 +85,9 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          icon={CalendarClock}
-          label="남은 기간"
-          value={stats.remainDays >= 0 ? `D-${stats.remainDays}` : `D+${Math.abs(stats.remainDays)}`}
-          hint={`마감 ${formatKST(team.dueAt, 'date')}`}
-        />
-        <StatCard
-          icon={CheckCircle2}
-          label="진행 중 할 일"
-          value={`${stats.openTasks.length}건`}
-          hint={`완료 ${tasks.length - stats.openTasks.length}건`}
-        />
-        <StatCard
-          icon={Timer}
-          label="48시간 내 마감"
-          value={`${stats.soon.length}건`}
-          hint={stats.overdue.length > 0 ? `마감 지남 ${stats.overdue.length}건` : '지난 마감 없음'}
-        />
-        <StatCard
-          icon={Activity}
-          label="최근 7일 활동"
-          value={`${stats.weekEvents.length}개`}
-          hint={`팀원 ${Object.keys(team.members).length}명`}
-        />
-      </div>
+      <DashboardStats team={team} tasks={tasks} events={events} now={now} />
 
-      <div ref={surfaceRef} id="report-surface" className="flex flex-col gap-4 bg-background p-1">
+      <div ref={surfaceRef} id="report-surface" className="bg-background flex flex-col gap-4 p-1">
         <Card id="tutorial-bars">
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle className="text-lg">기여도</CardTitle>
@@ -182,80 +109,7 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
         </Card>
 
         <div className="grid gap-4 xl:grid-cols-3">
-          <Card id="tutorial-timeline" className="xl:col-span-2">
-            <CardHeader className="flex-row items-center justify-between gap-2">
-              <CardTitle className="text-base">활동 시간축 · {formatKST(team.startAt, 'date')} ~</CardTitle>
-              <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-                적음
-                <span className="bg-muted size-2.5 rounded-[3px]" />
-                <span className="bg-primary/30 size-2.5 rounded-[3px]" />
-                <span className="bg-primary/55 size-2.5 rounded-[3px]" />
-                <span className="bg-primary/75 size-2.5 rounded-[3px]" />
-                <span className="bg-primary size-2.5 rounded-[3px]" />
-                많음
-              </span>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3 overflow-x-auto">
-              {result.members.map((member) => (
-                <div key={member.uid} className="flex items-center gap-3">
-                  <span className="text-muted-foreground w-16 shrink-0 truncate text-right text-xs">
-                    {team.members[member.uid].nickname}
-                  </span>
-                  <div className="flex flex-1 gap-1">
-                    {result.timelineDays.map((day) => {
-                      const count = result.timeline[member.uid]?.[day] ?? 0;
-                      const items = result.timelineDetails[member.uid]?.[day] ?? [];
-                      const color =
-                        count === 0
-                          ? 'bg-muted'
-                          : count <= 2
-                            ? 'bg-primary/30'
-                            : count <= 5
-                              ? 'bg-primary/55'
-                              : count <= 10
-                                ? 'bg-primary/75'
-                                : 'bg-primary';
-                      return (
-                        <span
-                          key={day}
-                          tabIndex={0}
-                          onMouseEnter={(e) => {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            setBubble({
-                              x: rect.left + rect.width / 2,
-                              y: rect.top,
-                              who: team.members[member.uid].nickname,
-                              day,
-                              count,
-                              items,
-                            });
-                          }}
-                          onMouseLeave={() => setBubble(null)}
-                          onFocus={(e) => {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            setBubble({
-                              x: rect.left + rect.width / 2,
-                              y: rect.top,
-                              who: team.members[member.uid].nickname,
-                              day,
-                              count,
-                              items,
-                            });
-                          }}
-                          onBlur={() => setBubble(null)}
-                          className={`hover:ring-primary/60 size-4.5 shrink-0 cursor-pointer rounded-[3px] outline-none transition-transform hover:scale-110 hover:ring-2 focus-visible:ring-2 ${color}`}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-              <div className="text-muted-foreground flex items-center justify-between text-[10px]">
-                <span>{result.timelineDays[0] ?? ''}</span>
-                <span>{result.timelineDays[result.timelineDays.length - 1] ?? ''}</span>
-              </div>
-            </CardContent>
-          </Card>
+          <ActivityHeatmap team={team} result={result} />
 
           <Card>
             <CardHeader>
@@ -281,41 +135,6 @@ export function DashboardPanel({ team, events, tasks }: DashboardPanelProps) {
           </Card>
         </div>
       </div>
-
-      {bubble ? (
-        <div
-          className="pointer-events-none fixed z-50 w-64 -translate-x-1/2 -translate-y-full"
-          style={{ left: bubble.x, top: bubble.y - 10 }}
-        >
-          <div className="bg-popover text-popover-foreground rounded-lg border p-3 shadow-lg">
-            <p className="text-xs font-semibold">
-              {bubble.who} ·{' '}
-              {(() => {
-                const [y, m, d] = bubble.day.split('-');
-                return `${Number(y)}. ${Number(m)}. ${Number(d)}`;
-              })()}
-            </p>
-            <p className="text-muted-foreground mt-0.5 text-[11px]">활동 {bubble.count}개</p>
-            {bubble.items.length > 0 ? (
-              <ul className="mt-2 flex flex-col gap-1">
-                {bubble.items.slice(0, 5).map((item, index) => (
-                  <li key={index} className="truncate text-[11px]">
-                    · {item}
-                  </li>
-                ))}
-                {bubble.count > Math.min(bubble.items.length, 5) ? (
-                  <li className="text-muted-foreground text-[11px]">
-                    외 {bubble.count - Math.min(bubble.items.length, 5)}건
-                  </li>
-                ) : null}
-              </ul>
-            ) : (
-              <p className="text-muted-foreground mt-2 text-[11px]">기록 없음</p>
-            )}
-          </div>
-          <div className="bg-popover mx-auto -mt-1.5 size-3 rotate-45 border-r border-b" />
-        </div>
-      ) : null}
 
       <Badge variant="outline" className="self-start text-[11px]">
         가중치 · 문서 {team.weights.doc} / 자료 {team.weights.file} / 할 일 {team.weights.task} / 회의{' '}
