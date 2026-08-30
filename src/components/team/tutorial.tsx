@@ -46,7 +46,13 @@ const TUTORIALS: Record<string, Step[]> = {
     { element: '#tut-chat-input', popover: { title: '보내기', description: '보낸 글자 수도 활동 기록으로 함께 남아요' } },
   ],
   meetings: [
-    { element: '#tut-meeting-new', popover: { title: '회의록 작성', description: '주제·일시·장소·참석자·세 줄 요약을 정해진 형식으로' } },
+    {
+      element: '#tut-meeting-new',
+      popover: {
+        title: '회의록 작성',
+        description: '주제·일시·장소·참석자를 적고 본문을 쓰면, AI가 세 줄 요약을 만들어 줍니다. 어색한 줄은 직접 고칠 수 있어요',
+      },
+    },
     {
       element: '#tut-meeting-card',
       popover: { title: '카드에는 요약만', description: '카드를 누르면 문서 형태의 회의록 전문이 열립니다' },

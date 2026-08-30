@@ -1,6 +1,6 @@
+@import url("https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/complete/WantedSansVariable.min.css");
 @import "tailwindcss";
 @import "tw-animate-css";
-@import url("https://cdn.jsdelivr.net/gh/wanteddev/wanted-sans@v1.0.3/packages/wanted-sans/fonts/webfonts/variable/complete/WantedSansVariable.min.css");
 
 @custom-variant dark (&:is(.dark *));
 
@@ -111,4 +111,14 @@
     @apply bg-background text-foreground;
     letter-spacing: -0.01em;
   }
+}
+
+/* AI 요약 생성 중 — 표면의 그라디언트가 흐른다 */
+@keyframes ai-sweep {
+  from { background-position: 0% 50%; }
+  to { background-position: 200% 50%; }
+}
+.ai-generating {
+  background-size: 200% 100%;
+  animation: ai-sweep 1.6s linear infinite;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarCheck, ClipboardList, Plus } from 'lucide-react';
+import { CalendarCheck, ClipboardList, Plus, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,7 @@ import { Markdown } from '@/components/markdown';
 import { checkAttend, createMeeting } from '@/lib/team-ops';
 import { formatKST } from '@/lib/time';
 import type { Meeting, Team } from '@/lib/types';
-import { SummaryComposer, SummaryLines } from './meeting-summary';
+import { SummaryComposer, SummaryLines, useMeetingSummary } from './meeting-summary';
 
 interface MeetingsPanelProps {
   team: Team;
@@ -32,7 +32,7 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
   const [place, setPlace] = useState('');
   const [online, setOnline] = useState(false);
   const [attendees, setAttendees] = useState<string[]>([uid]);
-  const [summaryLines, setSummaryLines] = useState<string[]>(['', '', '']);
+  const summary = useMeetingSummary();
   const [body, setBody] = useState('');
 
   const submit = async () => {
@@ -48,12 +48,12 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
         place: place.trim(),
         online,
         attendeeUids: attendees,
-        summary3: summaryLines.map((line) => line.trim()).filter(Boolean).join('\n'),
+        summary3: summary.lines.map((line) => line.trim()).filter(Boolean).join('\n'),
         body: body.trim(),
       });
       setOpen(false);
       setTitle('');
-      setSummaryLines(['', '', '']);
+      summary.reset();
       setBody('');
       toast.success('회의록을 저장했어요');
     } catch (error) {
@@ -131,11 +131,28 @@ export function MeetingsPanel({ team, meetings, uid }: MeetingsPanelProps) {
                 <p className="text-muted-foreground mt-1 text-[11px]">## 제목, - 목록 같은 마크다운을 그대로 씁니다</p>
               </div>
               <div className="col-span-2">
-                <SummaryComposer title={title} body={body} lines={summaryLines} onChange={setSummaryLines} />
+                <SummaryComposer lines={summary.lines} status={summary.status} onChange={summary.setLines} />
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={() => void submit()}>저장</Button>
+              {/* 요약을 만들어야 저장이 열린다. 본문을 고치면 다시 만들게 된다. */}
+              {summary.isFresh(body) ? (
+                <Button onClick={() => void submit()}>저장</Button>
+              ) : (
+                <Button
+                  disabled={summary.status === 'running' || body.trim().length < 30}
+                  onClick={() => void summary.generate(title, body)}
+                >
+                  <Sparkles className={summary.status === 'running' ? 'animate-pulse' : ''} />
+                  {summary.status === 'running' ? '요약 생성 중…' : 'AI 요약 생성'}
+                </Button>
+              )}
+              {/* AI 가 응답하지 못했을 때 쓴 글이 갇히지 않도록 열어 두는 문 */}
+              {summary.status === 'failed' ? (
+                <Button variant="ghost" onClick={() => void submit()}>
+                  요약 없이 저장
+                </Button>
+              ) : null}
             </DialogFooter>
           </DialogContent>
         </Dialog>
